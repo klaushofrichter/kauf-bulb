@@ -1,0 +1,38 @@
+We are building a local server using node 20.19 with express. this is running on MacOS. 
+
+When starting, the server is looking for devices connected to the local network that 
+implement the ESPHome Web Server REST API.
+
+We are looking for devices that have instance names starting with the string "kauf-bulb", for example
+"kauf-bulb-bc3923". We can discover these with the terminal command "dns-sd -B _esphomelib._tcp" or
+a native zeroconf library, such as "bonjour-service". 
+
+Any match should be checked against the data in the ./bulb-directory.json file that provides a
+user friendly name for each bulb. If there is no match, the server should use the ID as friendly 
+name. 
+
+The server should build an internal table of the IDs, the associated IP addresses, and the name, and 
+the table should be written back to the ./bulb-directly.json file, including and data that was already
+present in the file, even when the bulb mentioned was not present. If there is duplication of IDs, the 
+previously available data should be used. 
+
+The server should repeat the lookup for devices every minute. 
+
+The devices found are "Kauf Bulbs", which are lights that can be controlled through a REST API compatible 
+with ESPHome Web Server REST API.
+
+The server provides a REST API with the following functions: 
+* list the known devices, e.g. through a GET endpoint /api/list
+* turn on all known lights, e.g. through a GET endpoint /api/on
+* turn off all known lights, e.g. through a GET endpoint /api/off
+* turn on a specific device, e.g. through a GET endpoint /api/on?device=<ID>
+* turn off a specific device, e.g. through a GET endpoint /api/off?device=<ID>
+* refresh the list of devices
+
+The server also offers a Web UI using VUE3 composition API 
+
+The web app offers the following functions:
+* list of devices with buttons to turn them on and off
+* refresh of the list of devices
+
+* a list of 
