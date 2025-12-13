@@ -1,6 +1,6 @@
 {
   "name": "kauf-bulb",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Local server for discovering and controlling Kauf Bulbs via ESPHome API",
   "type": "module",
   "scripts": {

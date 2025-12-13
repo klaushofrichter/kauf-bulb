@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# Restart the development server after commit to reflect new version
+# Only restart if a server is already running on port 3001
+
+if lsof -ti:3001 > /dev/null 2>&1; then
+  echo "Restarting development server..."
+  lsof -ti:3001 | xargs kill -9 2>/dev/null
+  sleep 1
+  npm run dev > /dev/null 2>&1 &
+  echo "Development server restarted with updated version"
+fi
