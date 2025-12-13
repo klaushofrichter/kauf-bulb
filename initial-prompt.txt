@@ -35,4 +35,3 @@ The web app offers the following functions:
 * list of devices with buttons to turn them on and off
 * refresh of the list of devices
 
-* a list of 
