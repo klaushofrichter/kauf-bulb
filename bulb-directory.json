@@ -1,32 +1,14 @@
 [
   {
-    "id": "kauf-bulb-test1",
-    "name": "Updated Name",
-    "lastSeen": "2025-12-13T22:13:51.730Z",
-    "lastIp": "192.168.1.100"
-  },
-  {
-    "id": "kauf-bulb-test2",
-    "name": "Test Bulb 2",
-    "lastSeen": "2025-12-13T22:13:51.730Z",
-    "lastIp": "192.168.1.101"
-  },
-  {
-    "id": "kauf-bulb-offline",
-    "name": "Offline Bulb",
-    "lastSeen": "2025-12-12T22:13:51.730Z",
-    "lastIp": "192.168.1.102"
-  },
-  {
     "id": "kauf-bulb-7c3b36",
-    "name": "Updated Name",
-    "lastSeen": "2025-12-13T22:57:36.473Z",
+    "name": "Smaller Bulb",
+    "lastSeen": "2025-12-13T23:15:03.258Z",
     "lastIp": "192.168.1.67"
   },
   {
     "id": "kauf-bulb-bc3923",
     "name": "kauf-bulb-bc3923",
-    "lastSeen": "2025-12-13T22:57:36.478Z",
+    "lastSeen": "2025-12-13T23:15:03.262Z",
     "lastIp": "192.168.1.130"
   }
 ]

@@ -2,6 +2,9 @@ import express from 'express';
 import { bulbStore } from '../../server/bulbStore.js';
 import apiRoutes from '../../server/routes/api.js';
 
+// Store original save function
+const originalSave = bulbStore.save.bind(bulbStore);
+
 export function createTestApp() {
   const app = express();
   app.use(express.json());
@@ -12,6 +15,9 @@ export function createTestApp() {
 export function seedTestBulbs() {
   // Clear and seed with test data
   bulbStore.bulbs.clear();
+
+  // Mock save to prevent writing test data to real file
+  bulbStore.save = async () => Promise.resolve();
 
   bulbStore.bulbs.set('kauf-bulb-test1', {
     id: 'kauf-bulb-test1',
@@ -40,6 +46,8 @@ export function seedTestBulbs() {
 
 export function clearTestBulbs() {
   bulbStore.bulbs.clear();
+  // Restore original save function
+  bulbStore.save = originalSave;
 }
 
 export { bulbStore };
