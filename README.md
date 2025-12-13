@@ -4,6 +4,8 @@ A local Node.js server and Vue.js web application for discovering and controllin
 
 ![Kauf Bulb Controller Web App](screenshot.png)
 
+**[Watch Demo Video](demo.webm)** - See the app in action
+
 ## About Kauf Bulbs
 
 [Kauf Bulbs](https://kaufha.com/) are ESP-based smart bulbs running [ESPHome](https://esphome.io/) firmware. They offer local control without cloud dependencies, making them ideal for privacy-conscious smart home setups.
