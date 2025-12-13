@@ -55,7 +55,7 @@ function closeModal() {
 <template>
   <div class="bulb-list">
     <div class="controls">
-      <button class="btn btn-primary" @click="handleAllOn" :disabled="loading">
+      <button class="btn btn-success" @click="handleAllOn" :disabled="loading">
         Turn All On
       </button>
       <button class="btn btn-secondary" @click="handleAllOff" :disabled="loading">
@@ -123,12 +123,12 @@ function closeModal() {
   cursor: not-allowed;
 }
 
-.btn-primary {
+.btn-success {
   background: #4ade80;
   color: #1a1a2e;
 }
 
-.btn-primary:hover:not(:disabled) {
+.btn-success:hover:not(:disabled) {
   background: #22c55e;
 }
 

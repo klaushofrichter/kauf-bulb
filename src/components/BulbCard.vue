@@ -83,7 +83,7 @@ function handleClick() {
     <div class="card-actions">
       <button
         class="power-btn"
-        :class="{ on: bulb.on, disabled: !bulb.online }"
+        :class="{ 'turn-on': !bulb.on, 'turn-off': bulb.on, disabled: !bulb.online }"
         :disabled="!bulb.online || isLoading || isTesting"
         @click="togglePower"
       >
@@ -197,17 +197,22 @@ function handleClick() {
   color: #374151;
 }
 
-.power-btn:hover:not(:disabled) {
-  background: #d1d5db;
-}
-
-.power-btn.on {
+.power-btn.turn-on {
   background: #4ade80;
   color: #1a1a2e;
 }
 
-.power-btn.on:hover:not(:disabled) {
+.power-btn.turn-on:hover:not(:disabled) {
   background: #22c55e;
+}
+
+.power-btn.turn-off {
+  background: #6b7280;
+  color: white;
+}
+
+.power-btn.turn-off:hover:not(:disabled) {
+  background: #4b5563;
 }
 
 .power-btn.disabled,

@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests/e2e',
+  outputDir: './tests/e2e/test-results',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -10,7 +11,8 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:3001',
     trace: 'on-first-retry',
-    screenshot: 'only-on-failure'
+    screenshot: 'only-on-failure',
+    video: 'on'
   },
   projects: [
     {

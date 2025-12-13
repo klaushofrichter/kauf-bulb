@@ -118,6 +118,39 @@ test.describe('Bulb Controls', () => {
     const response = await responsePromise;
     expect(response.ok()).toBeTruthy();
   });
+
+  test('should have Test button on bulb cards', async ({ page }) => {
+    const bulbCard = page.locator('.bulb-card').first();
+    const testButton = bulbCard.getByRole('button', { name: 'Test' });
+    await expect(testButton).toBeVisible();
+  });
+
+  test('should trigger test cycle when clicking Test button', async ({ page }) => {
+    // Find the first online bulb card with enabled Test button
+    const bulbCard = page.locator('.bulb-card').first();
+    const testButton = bulbCard.getByRole('button', { name: 'Test' });
+
+    // Check if the button is enabled
+    const isDisabled = await testButton.getAttribute('disabled');
+    if (isDisabled === null) {
+      // Click Test button and wait for the API call
+      const responsePromise = page.waitForResponse(response =>
+        response.url().includes('/api/bulb/') && response.url().includes('/test') && response.status() === 200
+      );
+
+      await testButton.click();
+
+      // Button should show "Testing..." while in progress
+      await expect(testButton).toHaveText('Testing...');
+
+      // Wait for test to complete
+      const response = await responsePromise;
+      expect(response.ok()).toBeTruthy();
+
+      // Button should return to "Test" after completion
+      await expect(testButton).toHaveText('Test', { timeout: 10000 });
+    }
+  });
 });
 
 test.describe('Bulb Modal', () => {
@@ -220,10 +253,19 @@ test.describe('Bulb Modal', () => {
   });
 
   test('should save name changes', async ({ page }) => {
+    // Mock the name API to prevent modifying the real bulb-directory.json
+    await page.route(/\/api\/bulb\/.*\/name$/, route => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, name: 'Test Name Change' })
+      });
+    });
+
     await page.locator('.bulb-card').first().click();
 
     const nameInput = page.locator('.modal input[type="text"]').first();
-    await nameInput.fill('Updated Name');
+    await nameInput.fill('Test Name Change');
 
     const responsePromise = page.waitForResponse(response =>
       response.url().includes('/name') && response.status() === 200
