@@ -186,16 +186,19 @@ async function recordDemo() {
     await clickAt(page, '.bulb-card');
     await sleep(800);
 
-    // 4. Wait for modal and scroll to show controls
+    // 4. Wait for modal to appear
     await page.waitForSelector('.modal', { timeout: 15000 });
-    await sleep(500);
+    await sleep(1000);
 
     // Scroll modal to bottom to show buttons
+    console.log('  - Scroll modal to show buttons');
     await page.evaluate(() => {
       const modal = document.querySelector('.modal-body');
-      if (modal) modal.scrollTop = modal.scrollHeight;
+      if (modal) {
+        modal.scrollTo({ top: modal.scrollHeight, behavior: 'smooth' });
+      }
     });
-    await sleep(500);
+    await sleep(1000);
 
     // 5. Adjust brightness slider
     console.log('  - Adjust brightness');
