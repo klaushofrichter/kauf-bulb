@@ -163,9 +163,10 @@ async function recordDemo() {
   await page.addStyleTag({ content: CURSOR_CSS });
   await page.evaluate(CURSOR_SCRIPT);
 
-  // Wait for bulbs to load
-  await page.waitForSelector('.bulb-card', { timeout: 10000 });
-  await sleep(1500);
+  // Wait for bulbs to load and be online (status class is 'on' or 'off' when online)
+  console.log('Waiting for bulbs to come online...');
+  await page.waitForSelector('.bulb-card:not(.offline)', { timeout: 15000 });
+  await sleep(2000);
 
   console.log('Recording demo sequence...');
 
