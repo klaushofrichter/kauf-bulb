@@ -163,6 +163,12 @@ async function recordDemo() {
   await page.addStyleTag({ content: CURSOR_CSS });
   await page.evaluate(CURSOR_SCRIPT);
 
+  // Set theme to light mode for consistent demo appearance
+  await page.evaluate(() => {
+    localStorage.setItem('kauf-bulb-theme', 'light');
+    document.documentElement.setAttribute('data-theme', 'light');
+  });
+
   // Wait for bulbs to load and be online (status class is 'on' or 'off' when online)
   console.log('Waiting for bulbs to come online...');
   await page.waitForSelector('.bulb-card:not(.offline)', { timeout: 15000 });
