@@ -252,6 +252,15 @@ test.describe('Bulb Modal', () => {
     await expect(page.locator('.modal')).not.toBeVisible();
   });
 
+  test('should close modal when pressing ESC key', async ({ page }) => {
+    await page.locator('.bulb-card').first().click();
+    await expect(page.locator('.modal')).toBeVisible();
+
+    // Press ESC key
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.modal')).not.toBeVisible();
+  });
+
   test('should save name changes', async ({ page }) => {
     // Mock the name API to prevent modifying the real bulb-directory.json
     await page.route(/\/api\/bulb\/.*\/name$/, route => {

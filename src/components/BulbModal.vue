@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useBulbs } from '../composables/useBulbs.js';
 
 const props = defineProps({
@@ -48,10 +48,21 @@ const lastSeenFormatted = computed(() => {
   return date.toLocaleString();
 });
 
+function handleKeydown(event) {
+  if (event.key === 'Escape') {
+    emit('close');
+  }
+}
+
 onMounted(async () => {
+  document.addEventListener('keydown', handleKeydown);
   if (props.bulb.online) {
     await Promise.all([fetchState(), fetchDeviceInfo()]);
   }
+});
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown);
 });
 
 watch(() => props.bulb.id, async () => {
