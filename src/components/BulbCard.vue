@@ -14,6 +14,15 @@ const emit = defineEmits(['click']);
 const { turnOn, turnOff, testBulb: apiTestBulb } = useBulbs();
 const isLoading = ref(false);
 const isTesting = ref(false);
+const testColor = ref(null);
+
+// Test colors matching server: Red, Green, Blue (1 second each)
+const TEST_COLORS = [
+  { r: 255, g: 0, b: 0 },   // Red
+  { r: 0, g: 255, b: 0 },   // Green
+  { r: 0, g: 0, b: 255 },   // Blue
+];
+const TEST_DISPLAY_MS = 1000;
 
 const statusClass = computed(() => {
   if (!props.bulb.online) return 'offline';
@@ -33,12 +42,28 @@ const bulbColor = computed(() => {
   return `rgb(${r}, ${g}, ${b})`;
 });
 
+const displayColor = computed(() => {
+  if (testColor.value) {
+    const { r, g, b } = testColor.value;
+    return `rgb(${r}, ${g}, ${b})`;
+  }
+  return bulbColor.value;
+});
+
 const bulbGlow = computed(() => {
   if (!props.bulb.online || !props.bulb.on) return 'none';
   const r = props.bulb.r ?? 255;
   const g = props.bulb.g ?? 255;
   const b = props.bulb.b ?? 255;
   return `0 0 12px rgba(${r}, ${g}, ${b}, 0.8)`;
+});
+
+const displayGlow = computed(() => {
+  if (testColor.value) {
+    const { r, g, b } = testColor.value;
+    return `0 0 12px rgba(${r}, ${g}, ${b}, 0.8)`;
+  }
+  return bulbGlow.value;
 });
 
 const lastSeenFormatted = computed(() => {
@@ -68,11 +93,25 @@ async function testBulb(event) {
   if (!props.bulb.online || isTesting.value) return;
 
   isTesting.value = true;
+
+  // Run color animation locally in parallel with API call
+  const animateColors = async () => {
+    for (const color of TEST_COLORS) {
+      testColor.value = color;
+      await new Promise(resolve => setTimeout(resolve, TEST_DISPLAY_MS));
+    }
+    testColor.value = null;
+  };
+
   try {
-    await apiTestBulb(props.bulb.id);
+    await Promise.all([
+      apiTestBulb(props.bulb.id),
+      animateColors()
+    ]);
   } catch (err) {
     console.error('Test failed:', err);
   } finally {
+    testColor.value = null;
     isTesting.value = false;
   }
 }
@@ -83,12 +122,12 @@ function handleClick() {
 </script>
 
 <template>
-  <div class="bulb-card" :class="statusClass" @click="handleClick">
+  <div class="bulb-card" :class="statusClass" :style="{ borderColor: displayColor }" @click="handleClick">
     <div class="card-header">
       <svg
         class="bulb-icon"
         :class="statusClass"
-        :style="{ color: bulbColor, filter: bulbGlow !== 'none' ? `drop-shadow(${bulbGlow})` : 'none' }"
+        :style="{ color: displayColor, filter: displayGlow !== 'none' ? `drop-shadow(${displayGlow})` : 'none' }"
         viewBox="0 0 24 24"
         fill="currentColor"
       >
@@ -142,7 +181,7 @@ function handleClick() {
 }
 
 .bulb-card.on {
-  border-color: #4ade80;
+  /* border-color set dynamically via style binding */
 }
 
 .bulb-card.off {
