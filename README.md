@@ -54,6 +54,18 @@ A local Node.js server and Vue.js web application for discovering and controllin
 - npm
 - Kauf Bulbs on the same network
 
+### Platform Requirements
+
+The application runs on **macOS**, **Linux**, and **Windows**, but mDNS discovery requires platform-specific dependencies:
+
+| Platform | mDNS Requirement |
+|----------|------------------|
+| **macOS** | Built-in (no action needed) |
+| **Linux** | Install Avahi: `sudo apt install avahi-daemon` (Debian/Ubuntu) or equivalent |
+| **Windows** | Install [Bonjour Print Services](https://support.apple.com/kb/DL999) or iTunes |
+
+**Note:** Some test scripts (`npm run test:curl`, `npm run test`) require bash and will not run on Windows without WSL, Git Bash, or similar. The core application works without these tests.
+
 ### Setup
 
 ```bash
