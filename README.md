@@ -111,7 +111,17 @@ GET /api/off?device=<id>        # Turn off specific bulb
 GET /api/refresh
 POST /api/refresh
 ```
-Triggers mDNS discovery to find new bulbs. This is non-blocking - the API returns immediately while discovery runs in the background. Bulbs typically respond within 2-5 seconds. Discovery also runs automatically every 60 seconds.
+Triggers mDNS discovery and waits for devices to respond. This is a **blocking call** that takes ~5 seconds (15-second max timeout). Returns the updated bulb list directly, eliminating the need for a separate `/api/list` call. Discovery also runs automatically every 60 seconds in the background.
+
+Response:
+```json
+{
+  "message": "Discovery completed",
+  "bulbs": [...],
+  "devicesFound": 2,
+  "duration": 5003
+}
+```
 
 #### Get Bulb State
 ```

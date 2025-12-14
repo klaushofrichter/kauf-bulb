@@ -36,7 +36,7 @@ test.describe('Kauf Bulb Controller App', () => {
     // Check that bulb cards have expected structure
     const firstCard = page.locator('.bulb-card').first();
     await expect(firstCard.locator('.bulb-name')).toBeVisible();
-    await expect(firstCard.locator('.status-indicator')).toBeVisible();
+    await expect(firstCard.locator('.bulb-icon')).toBeVisible();
   });
 
   test('should show status indicators', async ({ page }) => {
@@ -44,11 +44,11 @@ test.describe('Kauf Bulb Controller App', () => {
       response.url().includes('/api/list') && response.status() === 200
     );
 
-    // Check for status indicators (one per bulb card)
+    // Check for bulb icons (one per bulb card)
     const bulbCards = page.locator('.bulb-card');
-    const statusIndicators = page.locator('.status-indicator');
+    const bulbIcons = page.locator('.bulb-icon');
     const cardCount = await bulbCards.count();
-    await expect(statusIndicators).toHaveCount(cardCount);
+    await expect(bulbIcons).toHaveCount(cardCount);
   });
 });
 
@@ -362,5 +362,95 @@ test.describe('Responsive Layout', () => {
     // Grid should still be visible but with different columns
     const grid = page.locator('.grid');
     await expect(grid).toBeVisible();
+  });
+});
+
+test.describe('Theme Toggle', () => {
+  test.beforeEach(async ({ page }) => {
+    // Clear localStorage before each test
+    await page.goto('/');
+    await page.evaluate(() => localStorage.removeItem('kauf-bulb-theme'));
+    await page.reload();
+    await page.waitForResponse(response =>
+      response.url().includes('/api/list') && response.status() === 200
+    );
+  });
+
+  test('should display theme toggle button', async ({ page }) => {
+    const themeToggle = page.locator('.theme-toggle');
+    await expect(themeToggle).toBeVisible();
+  });
+
+  test('should cycle through themes on click', async ({ page }) => {
+    const themeToggle = page.locator('.theme-toggle');
+
+    // Initial state should be system (default)
+    await expect(themeToggle).toHaveAttribute('title', 'Theme: System');
+
+    // Click to cycle to light
+    await themeToggle.click();
+    await expect(themeToggle).toHaveAttribute('title', 'Theme: Light');
+
+    // Click to cycle to dark
+    await themeToggle.click();
+    await expect(themeToggle).toHaveAttribute('title', 'Theme: Dark');
+
+    // Click to cycle back to system
+    await themeToggle.click();
+    await expect(themeToggle).toHaveAttribute('title', 'Theme: System');
+  });
+
+  test('should apply dark theme styles', async ({ page }) => {
+    const themeToggle = page.locator('.theme-toggle');
+
+    // Click twice to get to dark mode (system -> light -> dark)
+    await themeToggle.click();
+    await themeToggle.click();
+
+    // Verify dark theme is applied
+    const theme = await page.evaluate(() =>
+      document.documentElement.getAttribute('data-theme')
+    );
+    expect(theme).toBe('dark');
+  });
+
+  test('should apply light theme styles', async ({ page }) => {
+    const themeToggle = page.locator('.theme-toggle');
+
+    // Click once to get to light mode
+    await themeToggle.click();
+
+    // Verify light theme is applied
+    const theme = await page.evaluate(() =>
+      document.documentElement.getAttribute('data-theme')
+    );
+    expect(theme).toBe('light');
+  });
+
+  test('should persist theme preference', async ({ page }) => {
+    const themeToggle = page.locator('.theme-toggle');
+
+    // Set to dark mode
+    await themeToggle.click();
+    await themeToggle.click();
+
+    // Verify dark theme is stored
+    const storedTheme = await page.evaluate(() =>
+      localStorage.getItem('kauf-bulb-theme')
+    );
+    expect(storedTheme).toBe('dark');
+
+    // Reload the page
+    await page.reload();
+    await page.waitForResponse(response =>
+      response.url().includes('/api/list') && response.status() === 200
+    );
+
+    // Theme should still be dark
+    await expect(themeToggle).toHaveAttribute('title', 'Theme: Dark');
+    const themeAfterReload = await page.evaluate(() =>
+      document.documentElement.getAttribute('data-theme')
+    );
+    expect(themeAfterReload).toBe('dark');
   });
 });

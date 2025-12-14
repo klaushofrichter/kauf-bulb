@@ -86,9 +86,19 @@ router.get('/off', async (req, res) => {
 });
 
 // Refresh device discovery (supports both GET and POST)
+// Blocks for ~5 seconds while discovering devices, returns bulb list
 async function handleRefresh(req, res) {
-  await refreshDiscovery();
-  res.json({ message: 'Discovery refresh initiated' });
+  try {
+    const result = await refreshDiscovery();
+    res.json({
+      message: 'Discovery completed',
+      bulbs: result.bulbs,
+      devicesFound: result.devicesFound,
+      duration: result.duration
+    });
+  } catch (error) {
+    res.status(504).json({ error: error.message });
+  }
 }
 router.get('/refresh', handleRefresh);
 router.post('/refresh', handleRefresh);

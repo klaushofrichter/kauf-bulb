@@ -124,39 +124,39 @@ function closeModal() {
 }
 
 .btn-success {
-  background: #4ade80;
-  color: #1a1a2e;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
 }
 
 .btn-success:hover:not(:disabled) {
-  background: #22c55e;
+  filter: brightness(0.9);
 }
 
 .btn-secondary {
-  background: #6b7280;
-  color: white;
+  background: var(--btn-secondary-bg);
+  color: var(--btn-secondary-text);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: #4b5563;
+  filter: brightness(0.85);
 }
 
 .btn-outline {
-  background: white;
-  border-color: #d1d5db;
-  color: #374151;
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
 }
 
 .btn-outline:hover:not(:disabled) {
-  background: #f3f4f6;
-  border-color: #9ca3af;
+  background: var(--bg-primary);
+  border-color: var(--text-secondary);
 }
 
 .loading,
 .empty {
   text-align: center;
   padding: 3rem;
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 1.1rem;
 }
 

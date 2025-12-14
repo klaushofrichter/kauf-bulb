@@ -119,6 +119,7 @@ export function useBulbs() {
   }
 
   async function refreshDiscovery() {
+    loading.value = true;
     error.value = null;
     try {
       const response = await fetch('/api/refresh', { method: 'POST' });
@@ -127,13 +128,16 @@ export function useBulbs() {
         throw new Error(`HTTP ${response.status}`);
       }
 
-      // Wait a bit for discovery to find devices
-      setTimeout(fetchBulbs, 3000);
-      return await response.json();
+      const data = await response.json();
+      // API now returns bulb list directly after ~5 second discovery window
+      bulbs.value = data.bulbs || [];
+      return data;
     } catch (err) {
       error.value = `Failed to refresh: ${err.message}`;
       console.error('refreshDiscovery error:', err);
       throw err;
+    } finally {
+      loading.value = false;
     }
   }
 

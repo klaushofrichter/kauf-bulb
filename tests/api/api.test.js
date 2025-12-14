@@ -16,7 +16,11 @@ vi.mock('../../server/bulbController.js', () => ({
 
 // Mock discovery
 vi.mock('../../server/discovery.js', () => ({
-  refreshDiscovery: vi.fn().mockResolvedValue(undefined)
+  refreshDiscovery: vi.fn().mockResolvedValue({
+    bulbs: [],
+    devicesFound: 0,
+    duration: 5000
+  })
 }));
 
 describe('REST API Endpoints', () => {
@@ -147,12 +151,25 @@ describe('REST API Endpoints', () => {
   });
 
   describe('POST /api/refresh', () => {
-    it('should trigger discovery refresh', async () => {
+    it('should trigger discovery refresh and return results', async () => {
       const response = await request(app)
         .post('/api/refresh')
         .expect(200);
 
-      expect(response.body.message).toBe('Discovery refresh initiated');
+      expect(response.body.message).toBe('Discovery completed');
+      expect(response.body).toHaveProperty('bulbs');
+      expect(response.body).toHaveProperty('devicesFound');
+      expect(response.body).toHaveProperty('duration');
+    });
+  });
+
+  describe('GET /api/refresh', () => {
+    it('should trigger discovery refresh via GET', async () => {
+      const response = await request(app)
+        .get('/api/refresh')
+        .expect(200);
+
+      expect(response.body.message).toBe('Discovery completed');
     });
   });
 

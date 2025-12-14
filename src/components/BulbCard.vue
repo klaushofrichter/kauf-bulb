@@ -25,6 +25,22 @@ const statusText = computed(() => {
   return props.bulb.on ? 'On' : 'Off';
 });
 
+const bulbColor = computed(() => {
+  if (!props.bulb.online || !props.bulb.on) return null;
+  const r = props.bulb.r ?? 255;
+  const g = props.bulb.g ?? 255;
+  const b = props.bulb.b ?? 255;
+  return `rgb(${r}, ${g}, ${b})`;
+});
+
+const bulbGlow = computed(() => {
+  if (!props.bulb.online || !props.bulb.on) return 'none';
+  const r = props.bulb.r ?? 255;
+  const g = props.bulb.g ?? 255;
+  const b = props.bulb.b ?? 255;
+  return `0 0 12px rgba(${r}, ${g}, ${b}, 0.8)`;
+});
+
 const lastSeenFormatted = computed(() => {
   if (!props.bulb.lastSeen) return 'Never';
   const date = new Date(props.bulb.lastSeen);
@@ -69,7 +85,15 @@ function handleClick() {
 <template>
   <div class="bulb-card" :class="statusClass" @click="handleClick">
     <div class="card-header">
-      <div class="status-indicator" :class="statusClass"></div>
+      <svg
+        class="bulb-icon"
+        :class="statusClass"
+        :style="{ color: bulbColor, filter: bulbGlow !== 'none' ? `drop-shadow(${bulbGlow})` : 'none' }"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+      >
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7zm2 15h-4v-1h4v1zm0-2h-4v-1h4v1zm-1.5 5h-1c-.28 0-.5-.22-.5-.5s.22-.5.5-.5h1c.28 0 .5.22.5.5s-.22.5-.5.5zm1-1h-3c-.28 0-.5-.22-.5-.5s.22-.5.5-.5h3c.28 0 .5.22.5.5s-.22.5-.5.5z"/>
+      </svg>
       <span class="status-text">{{ statusText }}</span>
     </div>
 
@@ -103,10 +127,10 @@ function handleClick() {
 
 <style scoped>
 .bulb-card {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--card-shadow);
   cursor: pointer;
   transition: all 0.2s;
   border: 2px solid transparent;
@@ -114,11 +138,15 @@ function handleClick() {
 
 .bulb-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 16px var(--card-shadow-hover);
 }
 
 .bulb-card.on {
   border-color: #4ade80;
+}
+
+.bulb-card.off {
+  border-color: var(--border-color);
 }
 
 .bulb-card.offline {
@@ -132,29 +160,28 @@ function handleClick() {
   margin-bottom: 0.75rem;
 }
 
-.status-indicator {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #9ca3af;
+.bulb-icon {
+  width: 24px;
+  height: 24px;
+  color: #9ca3af;
+  transition: all 0.3s ease;
 }
 
-.status-indicator.on {
-  background: #4ade80;
-  box-shadow: 0 0 8px #4ade80;
+.bulb-icon.on {
+  /* Color is set dynamically via style binding */
 }
 
-.status-indicator.off {
-  background: #6b7280;
+.bulb-icon.off {
+  color: #6b7280;
 }
 
-.status-indicator.offline {
-  background: #dc3545;
+.bulb-icon.offline {
+  color: #dc3545;
 }
 
 .status-text {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -162,7 +189,7 @@ function handleClick() {
 .bulb-name {
   margin: 0 0 0.75rem;
   font-size: 1.25rem;
-  color: #1f2937;
+  color: var(--text-primary);
 }
 
 .bulb-info {
@@ -172,7 +199,7 @@ function handleClick() {
 .bulb-info p {
   margin: 0.25rem 0;
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--text-secondary);
 }
 
 .ip {
@@ -193,26 +220,26 @@ function handleClick() {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  background: #e5e7eb;
-  color: #374151;
+  background: var(--btn-disabled-bg);
+  color: var(--text-primary);
 }
 
 .power-btn.turn-on {
-  background: #4ade80;
-  color: #1a1a2e;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
 }
 
 .power-btn.turn-on:hover:not(:disabled) {
-  background: #22c55e;
+  filter: brightness(0.9);
 }
 
 .power-btn.turn-off {
-  background: #6b7280;
-  color: white;
+  background: var(--btn-secondary-bg);
+  color: var(--btn-secondary-text);
 }
 
 .power-btn.turn-off:hover:not(:disabled) {
-  background: #4b5563;
+  filter: brightness(0.85);
 }
 
 .power-btn.disabled,

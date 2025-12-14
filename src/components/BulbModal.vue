@@ -161,7 +161,10 @@ function handleBackdropClick(event) {
   <div class="modal-backdrop" @click="handleBackdropClick">
     <div class="modal">
       <div class="modal-header">
-        <h2>Bulb Settings</h2>
+        <div class="modal-title">
+          <h2>Bulb Settings</h2>
+          <span class="bulb-id">{{ bulb.id }}</span>
+        </div>
         <button class="close-btn" @click="close">&times;</button>
       </div>
 
@@ -314,7 +317,7 @@ function handleBackdropClick(event) {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--modal-backdrop);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -323,13 +326,13 @@ function handleBackdropClick(event) {
 }
 
 .modal {
-  background: white;
+  background: var(--modal-bg);
   border-radius: 16px;
   width: 100%;
   max-width: 640px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 32px var(--card-shadow-hover);
 }
 
 .modal-header {
@@ -337,13 +340,25 @@ function handleBackdropClick(event) {
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .modal-header h2 {
   margin: 0;
   font-size: 1.25rem;
-  color: #1f2937;
+  color: var(--text-primary);
+}
+
+.bulb-id {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-family: monospace;
 }
 
 .close-btn {
@@ -351,13 +366,13 @@ function handleBackdropClick(event) {
   border: none;
   font-size: 1.75rem;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--text-secondary);
   line-height: 1;
   padding: 0;
 }
 
 .close-btn:hover {
-  color: #1f2937;
+  color: var(--text-primary);
 }
 
 .modal-body {
@@ -372,16 +387,18 @@ function handleBackdropClick(event) {
   display: block;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151;
+  color: var(--text-primary);
   margin-bottom: 0.5rem;
 }
 
 .input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--input-border);
   border-radius: 8px;
   font-size: 1rem;
+  background: var(--input-bg);
+  color: var(--text-primary);
 }
 
 .input:focus {
@@ -400,7 +417,7 @@ function handleBackdropClick(event) {
 }
 
 .info-section {
-  background: #f9fafb;
+  background: var(--bg-primary);
   padding: 1rem;
   border-radius: 8px;
 }
@@ -412,12 +429,12 @@ function handleBackdropClick(event) {
 }
 
 .info-label {
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 0.875rem;
 }
 
 .info-value {
-  color: #1f2937;
+  color: var(--text-primary);
   font-size: 0.875rem;
 }
 
@@ -438,11 +455,11 @@ function handleBackdropClick(event) {
 }
 
 .info-value.off {
-  color: #6b7280;
+  color: var(--text-secondary);
 }
 
 .state-error {
-  background: #fef2f2;
+  background: rgba(220, 53, 69, 0.1);
   color: #dc3545;
   padding: 0.75rem;
   border-radius: 8px;
@@ -455,7 +472,7 @@ function handleBackdropClick(event) {
   height: 8px;
   -webkit-appearance: none;
   appearance: none;
-  background: #e5e7eb;
+  background: var(--btn-disabled-bg);
   border-radius: 4px;
   outline: none;
 }
@@ -498,17 +515,19 @@ function handleBackdropClick(event) {
 .rgb-input label {
   display: block;
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--text-secondary);
   margin-bottom: 0.25rem;
 }
 
 .rgb-input input {
   width: 100%;
   padding: 0.5rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--input-border);
   border-radius: 6px;
   font-size: 0.875rem;
   text-align: center;
+  background: var(--input-bg);
+  color: var(--text-primary);
 }
 
 .actions {
