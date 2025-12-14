@@ -110,6 +110,26 @@ GET /api/list
 ```
 Returns all known bulbs with their current state.
 
+Response:
+```json
+{
+  "bulbs": [
+    {
+      "id": "kauf-bulb-abc123",
+      "name": "Living Room",
+      "lastSeen": "2025-12-14T10:30:00.000Z",
+      "lastIp": "192.168.1.100",
+      "online": true,
+      "on": true,
+      "brightness": 80,
+      "r": 255,
+      "g": 200,
+      "b": 150
+    }
+  ]
+}
+```
+
 #### Turn On
 ```
 GET /api/on                     # Turn on all bulbs
@@ -117,11 +137,28 @@ GET /api/on?device=<id>         # Turn on specific bulb
 GET /api/on?transition=2000     # With 2-second transition
 ```
 
+Response (all bulbs):
+```json
+{
+  "results": [
+    { "device": "kauf-bulb-abc123", "success": true, "ip": "192.168.1.100" },
+    { "device": "kauf-bulb-def456", "success": true, "ip": "192.168.1.101" }
+  ]
+}
+```
+
+Response (specific bulb):
+```json
+{ "device": "kauf-bulb-abc123", "success": true, "ip": "192.168.1.100" }
+```
+
 #### Turn Off
 ```
 GET /api/off                    # Turn off all bulbs
 GET /api/off?device=<id>        # Turn off specific bulb
 ```
+
+Response format is the same as Turn On.
 
 #### Refresh Discovery
 ```
@@ -146,17 +183,62 @@ GET /api/bulb/:id/state
 ```
 Returns the current state of a specific bulb.
 
+Response:
+```json
+{
+  "device": "kauf-bulb-abc123",
+  "bulb": {
+    "id": "kauf-bulb-abc123",
+    "name": "Living Room",
+    "lastSeen": "2025-12-14T10:30:00.000Z",
+    "lastIp": "192.168.1.100",
+    "online": true
+  },
+  "success": true,
+  "ip": "192.168.1.100",
+  "state": {
+    "on": true,
+    "brightness": 80,
+    "r": 255,
+    "g": 200,
+    "b": 150
+  }
+}
+```
+
 #### Get Device Info
 ```
 GET /api/bulb/:id/info
 ```
 Returns firmware version, ESPHome version, and MAC address.
 
+Response:
+```json
+{
+  "device": "kauf-bulb-abc123",
+  "success": true,
+  "ip": "192.168.1.100",
+  "info": {
+    "title": "Kauf Bulb abc123",
+    "esphomeVersion": "2025.8.1",
+    "projectName": "Kauf.RGBWW",
+    "firmwareVersion": "1.96(u)",
+    "macAddress": "C4:5B:BE:AB:C1:23",
+    "freeSpace": 512000
+  }
+}
+```
+
 #### Test Bulb
 ```
 POST /api/bulb/:id/test
 ```
 Cycles the bulb through red, green, blue colors for identification.
+
+Response:
+```json
+{ "device": "kauf-bulb-abc123", "success": true, "ip": "192.168.1.100" }
+```
 
 #### Advanced Control
 ```
@@ -173,6 +255,11 @@ Content-Type: application/json
 }
 ```
 
+Response:
+```json
+{ "device": "kauf-bulb-abc123", "success": true, "ip": "192.168.1.100" }
+```
+
 #### Update Bulb Name
 ```
 POST /api/bulb/:id/name
@@ -181,6 +268,11 @@ Content-Type: application/json
 {
   "name": "Living Room Lamp"
 }
+```
+
+Response:
+```json
+{ "device": "kauf-bulb-abc123", "name": "Living Room Lamp" }
 ```
 
 ### API Examples with curl
