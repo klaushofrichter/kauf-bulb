@@ -264,8 +264,15 @@ async function recordDemo() {
       await sleep(1000);
     }
 
-    // 10. Close modal
+    // 10. Scroll modal back to top and close
     console.log('  - Close modal');
+    await page.evaluate(() => {
+      const modal = document.querySelector('.modal');
+      if (modal) {
+        modal.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+    await sleep(800);
     await clickAt(page, '.close-btn');
     await sleep(1500);
 
