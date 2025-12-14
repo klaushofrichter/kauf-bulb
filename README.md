@@ -5,8 +5,6 @@ A local Node.js server and Vue.js web application for discovering and controllin
 ![Dev Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fklaushofrichter%2Fkauf-bulb%2Frefs%2Fheads%2Fdevelop%2Fpackage.json&query=version&label=develop&color=%2333ca55) 
 
 
-![Kauf Bulb Controller Web App](screenshot.png)
-
 [![Watch demo on YouTube](https://img.youtube.com/vi/-kE1l3B1KBo/maxresdefault.jpg)](https://youtu.be/-kE1l3B1KBo)
 
 ## About Kauf Bulbs
