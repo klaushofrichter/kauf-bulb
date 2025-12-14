@@ -155,6 +155,60 @@ Content-Type: application/json
 }
 ```
 
+### API Examples with curl
+
+```bash
+# List all bulbs
+curl http://localhost:3001/api/list
+
+# Turn on all bulbs
+curl http://localhost:3001/api/on
+
+# Turn off all bulbs
+curl http://localhost:3001/api/off
+
+# Turn on a specific bulb
+curl "http://localhost:3001/api/on?device=kauf-bulb-abc123"
+
+# Turn off a specific bulb
+curl "http://localhost:3001/api/off?device=kauf-bulb-abc123"
+
+# Turn on with custom transition (2 seconds)
+curl "http://localhost:3001/api/on?device=kauf-bulb-abc123&transition=2000"
+
+# Refresh device discovery
+curl -X POST http://localhost:3001/api/refresh
+
+# Get bulb state
+curl http://localhost:3001/api/bulb/kauf-bulb-abc123/state
+
+# Get device info (firmware, MAC address)
+curl http://localhost:3001/api/bulb/kauf-bulb-abc123/info
+
+# Test bulb (cycles through red, green, blue)
+curl -X POST http://localhost:3001/api/bulb/kauf-bulb-abc123/test
+
+# Set brightness to 50% with orange color
+curl -X POST http://localhost:3001/api/bulb/kauf-bulb-abc123/control \
+  -H "Content-Type: application/json" \
+  -d '{"state": "on", "brightness": 50, "r": 255, "g": 128, "b": 0}'
+
+# Set color to blue with 1 second transition
+curl -X POST http://localhost:3001/api/bulb/kauf-bulb-abc123/control \
+  -H "Content-Type: application/json" \
+  -d '{"brightness": 100, "r": 0, "g": 0, "b": 255, "transition": 1000}'
+
+# Turn off with slow fade (3 seconds)
+curl -X POST http://localhost:3001/api/bulb/kauf-bulb-abc123/control \
+  -H "Content-Type: application/json" \
+  -d '{"state": "off", "transition": 3000}'
+
+# Update bulb friendly name
+curl -X POST http://localhost:3001/api/bulb/kauf-bulb-abc123/name \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Living Room Lamp"}'
+```
+
 ## Configuration
 
 ### Environment Variables
