@@ -108,6 +108,7 @@ GET /api/off?device=<id>        # Turn off specific bulb
 
 #### Refresh Discovery
 ```
+GET /api/refresh
 POST /api/refresh
 ```
 Triggers mDNS discovery to find new bulbs.
@@ -179,7 +180,7 @@ curl "http://localhost:3001/api/off?device=kauf-bulb-abc123"
 curl "http://localhost:3001/api/on?device=kauf-bulb-abc123&transition=2000"
 
 # Refresh device discovery
-curl -X POST http://localhost:3001/api/refresh
+curl http://localhost:3001/api/refresh
 
 # Get bulb state
 curl http://localhost:3001/api/bulb/kauf-bulb-abc123/state

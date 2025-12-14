@@ -85,11 +85,13 @@ router.get('/off', async (req, res) => {
   res.json({ results });
 });
 
-// Refresh device discovery
-router.post('/refresh', async (req, res) => {
+// Refresh device discovery (supports both GET and POST)
+async function handleRefresh(req, res) {
   await refreshDiscovery();
   res.json({ message: 'Discovery refresh initiated' });
-});
+}
+router.get('/refresh', handleRefresh);
+router.post('/refresh', handleRefresh);
 
 // Get specific bulb state
 router.get('/bulb/:id/state', async (req, res) => {
