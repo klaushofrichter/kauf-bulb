@@ -271,8 +271,11 @@ kauf-bulb/
 │   │   └── BulbModal.vue  # Settings modal
 │   └── composables/
 │       └── useBulbs.js    # API composable
+├── scripts/
+│   └── record-demo.js     # Demo video recording script
 ├── tests/
 │   ├── api/               # API unit/integration tests
+│   ├── curl/              # Curl API test script
 │   └── e2e/               # Playwright E2E tests
 ├── package.json
 ├── vite.config.js
@@ -286,6 +289,7 @@ The project includes comprehensive tests:
 - **API Tests**: Unit tests for all endpoints using Vitest + Supertest
 - **Integration Tests**: Tests against real bulbs on the network
 - **E2E Tests**: Browser tests using Playwright with video recording
+- **Curl Tests**: Shell script testing all API endpoints
 
 ```bash
 # Run all tests
@@ -293,7 +297,25 @@ npm run test
 
 # Run with real bulb integration
 npm run test:api:integration
+
+# Run curl API tests only
+npm run test:curl
 ```
+
+### Demo Recording
+
+A Playwright-based script is available to record demo videos of the application:
+
+```bash
+# Record a new demo video (requires server running and bulbs on network)
+node scripts/record-demo.js
+```
+
+The script:
+- Sets up initial bulb state (first bulb ON white 70%, second OFF)
+- Shows a visible cursor with click animations
+- Demonstrates: Turn All On/Off, modal controls, brightness adjustment, color picker, Apply changes
+- Outputs `demo.webm` in the project root
 
 ## Technical Details
 
