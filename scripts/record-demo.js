@@ -233,18 +233,7 @@ async function recordDemo() {
       }
     }
 
-    // 6. Click color picker to show native dialog
-    console.log('  - Open color picker');
-    const colorPicker = page.locator('input[type="color"]');
-    if (await colorPicker.isVisible()) {
-      await clickAt(page, 'input[type="color"]');
-      await sleep(1000);
-      // Press Escape to close color picker dialog
-      await page.keyboard.press('Escape');
-      await sleep(500);
-    }
-
-    // 7. Change RGB values
+    // 6. Change RGB values
     console.log('  - Change color to orange');
     const rInput = page.locator('input[type="number"]').nth(0);
     if (await rInput.isVisible()) {
