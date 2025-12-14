@@ -193,12 +193,12 @@ async function recordDemo() {
     // Scroll modal to bottom to show buttons
     console.log('  - Scroll modal to show buttons');
     await page.evaluate(() => {
-      const modal = document.querySelector('.modal-body');
+      const modal = document.querySelector('.modal');
       if (modal) {
         modal.scrollTo({ top: modal.scrollHeight, behavior: 'smooth' });
       }
     });
-    await sleep(1000);
+    await sleep(1500);
 
     // 5. Adjust brightness slider
     console.log('  - Adjust brightness');
