@@ -111,7 +111,7 @@ GET /api/off?device=<id>        # Turn off specific bulb
 GET /api/refresh
 POST /api/refresh
 ```
-Triggers mDNS discovery to find new bulbs.
+Triggers mDNS discovery to find new bulbs. This is non-blocking - the API returns immediately while discovery runs in the background. Bulbs typically respond within 2-5 seconds. Discovery also runs automatically every 60 seconds.
 
 #### Get Bulb State
 ```
