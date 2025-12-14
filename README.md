@@ -7,7 +7,7 @@ A local Node.js server and Vue.js web application for discovering and controllin
 
 ![Kauf Bulb Controller Web App](screenshot.png)
 
-**[Watch Demo Video](demo.mp4)** - See the app in action
+[![Watch demo on YouTube](https://img.youtube.com/vi/-kE1l3B1KBo/maxresdefault.jpg)](https://youtu.be/-kE1l3B1KBo)
 
 ## About Kauf Bulbs
 
