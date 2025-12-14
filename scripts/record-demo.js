@@ -181,9 +181,26 @@ async function recordDemo() {
     await clickAt(page, 'button:has-text("Turn All Off")');
     await sleep(1500);
 
-    // 3. Click on first bulb card to open modal
+    // 3. Use individual bulb card buttons on first bulb
+    // Click Turn On on first bulb card
+    console.log('  - Turn On (first bulb)');
+    await clickAt(page, '.bulb-card:first-child .power-btn');
+    await sleep(1000);
+
+    // Click Turn Off on first bulb card
+    console.log('  - Turn Off (first bulb)');
+    await clickAt(page, '.bulb-card:first-child .power-btn');
+    await sleep(1000);
+
+    // Click Test on first bulb card
+    console.log('  - Test (first bulb) - waiting for cycle to complete...');
+    await clickAt(page, '.bulb-card:first-child .test-btn');
+    // Wait for test to complete (cycles through red, green, blue ~3 seconds)
+    await sleep(3000);
+
+    // 4. Click on first bulb card name to open modal
     console.log('  - Open bulb modal');
-    await clickAt(page, '.bulb-card');
+    await clickAt(page, '.bulb-card:first-child .bulb-name');
     await sleep(800);
 
     // 4. Wait for modal to appear
