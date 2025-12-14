@@ -1,6 +1,6 @@
 {
   "name": "kauf-bulb",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Local server for discovering and controlling Kauf Bulbs via ESPHome API",
   "type": "module",
   "scripts": {
@@ -9,12 +9,13 @@
     "preview": "vite preview",
     "start": "NODE_ENV=production node server/index.js",
     "stop": "lsof -ti :${PORT:-3001} | xargs -r kill -9 2>/dev/null || echo 'No process found on port'",
-    "test": "vitest run && playwright test",
+    "test": "vitest run && playwright test && bash tests/curl/test-api.sh",
     "test:watch": "vitest",
     "test:api": "vitest run --config vitest.config.js tests/api/api.test.js",
     "test:api:integration": "vitest run --config vitest.config.js tests/api/integration.test.js",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "test:curl": "bash tests/curl/test-api.sh",
     "prepare": "husky"
   },
   "dependencies": {

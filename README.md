@@ -157,6 +157,8 @@ Content-Type: application/json
 
 ### API Examples with curl
 
+A test script with all curl commands is available at `tests/curl/test-api.sh`. Run with `npm run test:curl`.
+
 ```bash
 # List all bulbs
 curl http://localhost:3001/api/list
