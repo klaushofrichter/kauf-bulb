@@ -2,6 +2,9 @@
 
 A local Node.js server and Vue.js web application for discovering and controlling [Kauf RGBWW Smart Bulbs](https://kaufha.com/) on your home network.
 
+![Dev Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fklaushofrichter%2Fkauf-bulb%2Frefs%2Fheads%2Fdevelop%2Fpackage.json&query=version&label=develop&color=%2333ca55) 
+
+
 ![Kauf Bulb Controller Web App](screenshot.png)
 
 **[Watch Demo Video](demo.webm)** - See the app in action
@@ -34,12 +37,14 @@ A local Node.js server and Vue.js web application for discovering and controllin
 
 ### Web Application
 - **Responsive UI**: Works on desktop and mobile devices
-- **Bulb Dashboard**: Visual cards showing each bulb's status
+- **Theme Toggle**: Switch between light, dark, and system themes (persisted in localStorage)
+- **Bulb Dashboard**: Visual cards showing each bulb's status with lightbulb icons in actual bulb color
 - **Individual Control**: Toggle power, adjust brightness, set colors per bulb
 - **Bulk Actions**: Turn all on, turn all off, refresh discovery
-- **Settings Modal**: Edit bulb names, view device info (firmware, IP, MAC)
+- **Settings Modal**: Edit bulb names, view device info (firmware, IP, MAC), close with ESC key
 - **Test Mode**: Cycle through red, green, blue to identify bulbs
 - **Auto-Refresh**: Periodically updates bulb status
+- **Version Link**: Clickable version number linking to GitHub repository
 
 ## Installation
 
@@ -226,11 +231,13 @@ curl -X POST http://localhost:3001/api/bulb/kauf-bulb-abc123/name \
 
 ### Environment Variables
 
-Create a `.env` file (see `.env.example`):
+Create a `.env` file in the project root to customize settings (see `.env.example`):
 
 ```
-PORT=3001
+PORT=3001    # Server port (default: 3001)
 ```
+
+The server will use port 3001 by default. Change the `PORT` value to run on a different port.
 
 ### Bulb Directory
 
@@ -281,9 +288,11 @@ kauf-bulb/
 │   │   ├── BulbCard.vue   # Individual bulb card
 │   │   └── BulbModal.vue  # Settings modal
 │   └── composables/
-│       └── useBulbs.js    # API composable
+│       ├── useBulbs.js    # API composable
+│       └── useTheme.js    # Theme management composable
 ├── scripts/
-│   └── record-demo.js     # Demo video recording script
+│   ├── record-demo.js     # Demo video recording script
+│   └── take-screenshot.js # Screenshot capture script
 ├── tests/
 │   ├── api/               # API unit/integration tests
 │   ├── curl/              # Curl API test script
@@ -324,8 +333,9 @@ node scripts/record-demo.js
 
 The script:
 - Sets up initial bulb state (first bulb ON white 70%, second OFF)
+- Sets light theme for consistent appearance
 - Shows a visible cursor with click animations
-- Demonstrates: Turn All On/Off, modal controls, brightness adjustment, color picker, Apply changes
+- Demonstrates: Turn All On/Off, individual bulb controls, modal with brightness and RGB color adjustment
 - Outputs `demo.webm` in the project root
 
 ## Technical Details
