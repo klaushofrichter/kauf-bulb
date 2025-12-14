@@ -187,12 +187,12 @@ async function recordDemo() {
     await sleep(800);
 
     // 4. Wait for modal and scroll to show controls
-    await page.waitForSelector('.modal-content', { timeout: 5000 });
+    await page.waitForSelector('.modal', { timeout: 15000 });
     await sleep(500);
 
     // Scroll modal to bottom to show buttons
     await page.evaluate(() => {
-      const modal = document.querySelector('.modal-content');
+      const modal = document.querySelector('.modal-body');
       if (modal) modal.scrollTop = modal.scrollHeight;
     });
     await sleep(500);
@@ -255,15 +255,15 @@ async function recordDemo() {
 
     // 9. Click Turn On in modal
     console.log('  - Turn on from modal');
-    const turnOnButton = page.locator('.modal-content button:has-text("Turn On")');
+    const turnOnButton = page.locator('.modal button:has-text("Turn On")');
     if (await turnOnButton.isVisible()) {
-      await clickAt(page, '.modal-content button:has-text("Turn On")');
+      await clickAt(page, '.modal button:has-text("Turn On")');
       await sleep(1000);
     }
 
     // 10. Close modal
     console.log('  - Close modal');
-    await clickAt(page, '.modal-close');
+    await clickAt(page, '.close-btn');
     await sleep(1500);
 
     // 11. Click Refresh Status
