@@ -40,6 +40,8 @@ A local Node.js server and Vue.js web application for discovering and controllin
 - **Individual Control**: Toggle power, adjust brightness, set colors per bulb
 - **Bulk Actions**: Turn all on, turn all off, refresh discovery
 - **Settings Modal**: Edit bulb names, view device info (firmware, IP, MAC), close with ESC key
+- **Native Bulb UI Access**: Click on a bulb's IP address to open the native ESPHome web interface in a new tab
+- **Firmware Update Detection**: Bulbs with firmware older than v1.96 display an "Update Firmware" button linking to the native UI for updates
 - **Test Mode**: Cycle through red, green, blue to identify bulbs
 - **Auto-Refresh**: Periodically updates bulb status
 - **Version Link**: Clickable version number linking to GitHub repository
@@ -463,3 +465,7 @@ MIT
 - [Kauf Smart Home](https://kaufha.com/) for creating excellent ESPHome-based bulbs
 - [ESPHome](https://esphome.io/) for the local control firmware
 - [Bonjour Service](https://github.com/onlxltd/bonjour-service) for mDNS discovery
+
+## Notes
+
+You can reset the bulb to factory settings by power-cycling it five times. Then a new WiFi hotspot becomes available after a short while, which allows you to configure the local WLAN details.

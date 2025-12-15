@@ -128,6 +128,13 @@ router.get('/bulb/:id/info', async (req, res) => {
   }
 
   const result = await bulbController.getDeviceInfo(bulb.lastIp);
+
+  // Store firmware version if successfully fetched
+  if (result.success && result.info?.firmwareVersion) {
+    bulbStore.updateFirmwareVersion(req.params.id, result.info.firmwareVersion);
+    await bulbStore.save();
+  }
+
   res.json({ device: req.params.id, ...result });
 });
 

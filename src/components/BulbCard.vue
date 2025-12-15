@@ -72,6 +72,26 @@ const lastSeenFormatted = computed(() => {
   return date.toLocaleString();
 });
 
+// Parse firmware version string like "1.96(u)" to extract numeric version
+function parseFirmwareVersion(version) {
+  if (!version) return null;
+  const match = version.match(/^(\d+(?:\.\d+)?)/);
+  return match ? parseFloat(match[1]) : null;
+}
+
+const MINIMUM_FIRMWARE_VERSION = 1.96;
+
+const needsFirmwareUpdate = computed(() => {
+  const version = parseFirmwareVersion(props.bulb.firmwareVersion);
+  // If firmware version is unknown (null), don't block - allow modal to open
+  if (version === null) return false;
+  return version < MINIMUM_FIRMWARE_VERSION;
+});
+
+const firmwareUpdateUrl = computed(() => {
+  return props.bulb.lastIp ? `http://${props.bulb.lastIp}` : null;
+});
+
 async function togglePower(event) {
   event.stopPropagation();
   if (!props.bulb.online) return;
@@ -117,6 +137,8 @@ async function testBulb(event) {
 }
 
 function handleClick() {
+  // Don't open modal if firmware needs update
+  if (needsFirmwareUpdate.value) return;
   emit('click');
 }
 </script>
@@ -139,27 +161,49 @@ function handleClick() {
     <h3 class="bulb-name">{{ bulb.name }}</h3>
 
     <div class="bulb-info">
-      <p v-if="bulb.lastIp" class="ip">{{ bulb.lastIp }}</p>
+      <a
+        v-if="bulb.lastIp"
+        class="ip ip-link"
+        :href="`http://${bulb.lastIp}`"
+        target="_blank"
+        rel="noopener noreferrer"
+        @click.stop
+      >{{ bulb.lastIp }}</a>
       <p class="last-seen">Last seen: {{ lastSeenFormatted }}</p>
     </div>
 
     <div class="card-actions">
-      <button
-        class="power-btn"
-        :class="{ 'turn-on': !bulb.on, 'turn-off': bulb.on, disabled: !bulb.online }"
-        :disabled="!bulb.online || isLoading || isTesting"
-        @click="togglePower"
-      >
-        {{ isLoading ? '...' : (bulb.on ? 'Turn Off' : 'Turn On') }}
-      </button>
-      <button
-        class="test-btn"
-        :class="{ testing: isTesting, disabled: !bulb.online }"
-        :disabled="!bulb.online || isTesting"
-        @click="testBulb"
-      >
-        {{ isTesting ? 'Testing...' : 'Test' }}
-      </button>
+      <template v-if="needsFirmwareUpdate">
+        <a
+          v-if="firmwareUpdateUrl"
+          class="firmware-btn"
+          :href="firmwareUpdateUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          @click.stop
+        >
+          Update Firmware
+        </a>
+        <span v-else class="firmware-btn disabled">Update Firmware</span>
+      </template>
+      <template v-else>
+        <button
+          class="power-btn"
+          :class="{ 'turn-on': !bulb.on, 'turn-off': bulb.on, disabled: !bulb.online }"
+          :disabled="!bulb.online || isLoading || isTesting"
+          @click="togglePower"
+        >
+          {{ isLoading ? '...' : (bulb.on ? 'Turn Off' : 'Turn On') }}
+        </button>
+        <button
+          class="test-btn"
+          :class="{ testing: isTesting, disabled: !bulb.online }"
+          :disabled="!bulb.online || isTesting"
+          @click="testBulb"
+        >
+          {{ isTesting ? 'Testing...' : 'Test' }}
+        </button>
+      </template>
     </div>
   </div>
 </template>
@@ -243,6 +287,44 @@ function handleClick() {
 
 .ip {
   font-family: monospace;
+}
+
+.ip-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.ip-link:hover {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+
+.firmware-btn {
+  flex: 1;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #f59e0b;
+  color: white;
+  text-align: center;
+  text-decoration: none;
+  display: block;
+}
+
+.firmware-btn:hover {
+  background: #d97706;
+}
+
+.firmware-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--btn-disabled-bg);
+  color: var(--text-secondary);
 }
 
 .card-actions {

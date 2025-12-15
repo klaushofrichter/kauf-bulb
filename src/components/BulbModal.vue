@@ -206,7 +206,14 @@ function handleBackdropClick(event) {
           </div>
           <div class="info-row">
             <span class="info-label">IP Address:</span>
-            <span class="info-value mono">{{ bulb.lastIp || 'Unknown' }}</span>
+            <a
+              v-if="bulb.lastIp"
+              class="info-value mono ip-link"
+              :href="`http://${bulb.lastIp}`"
+              target="_blank"
+              rel="noopener noreferrer"
+            >{{ bulb.lastIp }}</a>
+            <span v-else class="info-value mono">Unknown</span>
           </div>
           <div class="info-row">
             <span class="info-label">Last Seen:</span>
@@ -467,6 +474,16 @@ function handleBackdropClick(event) {
 
 .info-value.off {
   color: var(--text-secondary);
+}
+
+.ip-link {
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.ip-link:hover {
+  color: #3b82f6;
+  text-decoration: underline;
 }
 
 .state-error {

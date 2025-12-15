@@ -374,6 +374,228 @@ test.describe('Responsive Layout', () => {
   });
 });
 
+test.describe('Firmware Update', () => {
+  test('should show Update Firmware button for old firmware', async ({ page }) => {
+    // Mock API to return a bulb with old firmware version
+    await page.route('**/api/list', route => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          bulbs: [{
+            id: 'test-bulb-old-firmware',
+            name: 'Old Firmware Bulb',
+            lastIp: '192.168.1.100',
+            lastSeen: new Date().toISOString(),
+            firmwareVersion: '1.90',
+            online: true,
+            on: true,
+            brightness: 100,
+            r: 255,
+            g: 255,
+            b: 255
+          }]
+        })
+      });
+    });
+
+    await page.goto('/');
+    await page.waitForSelector('.bulb-card');
+
+    // Should show Update Firmware button instead of power/test buttons
+    const firmwareBtn = page.locator('.firmware-btn');
+    await expect(firmwareBtn).toBeVisible();
+    await expect(firmwareBtn).toHaveText('Update Firmware');
+
+    // Should NOT show power or test buttons
+    await expect(page.locator('.power-btn')).not.toBeVisible();
+    await expect(page.locator('.test-btn')).not.toBeVisible();
+  });
+
+  test('should link Update Firmware button to bulb IP', async ({ page }) => {
+    await page.route('**/api/list', route => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          bulbs: [{
+            id: 'test-bulb-old-firmware',
+            name: 'Old Firmware Bulb',
+            lastIp: '192.168.1.100',
+            lastSeen: new Date().toISOString(),
+            firmwareVersion: '1.85',
+            online: true,
+            on: false
+          }]
+        })
+      });
+    });
+
+    await page.goto('/');
+    await page.waitForSelector('.bulb-card');
+
+    const firmwareBtn = page.locator('.firmware-btn');
+    await expect(firmwareBtn).toHaveAttribute('href', 'http://192.168.1.100');
+    await expect(firmwareBtn).toHaveAttribute('target', '_blank');
+  });
+
+  test('should not open modal when clicking card with old firmware', async ({ page }) => {
+    await page.route('**/api/list', route => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          bulbs: [{
+            id: 'test-bulb-old-firmware',
+            name: 'Old Firmware Bulb',
+            lastIp: '192.168.1.100',
+            lastSeen: new Date().toISOString(),
+            firmwareVersion: '1.50',
+            online: true,
+            on: true
+          }]
+        })
+      });
+    });
+
+    await page.goto('/');
+    await page.waitForSelector('.bulb-card');
+
+    // Click on the card (not on the firmware button)
+    await page.locator('.bulb-card').click();
+
+    // Modal should NOT be visible
+    await expect(page.locator('.modal')).not.toBeVisible();
+  });
+
+  test('should show normal controls for current firmware', async ({ page }) => {
+    await page.route('**/api/list', route => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          bulbs: [{
+            id: 'test-bulb-current-firmware',
+            name: 'Current Firmware Bulb',
+            lastIp: '192.168.1.101',
+            lastSeen: new Date().toISOString(),
+            firmwareVersion: '1.96(u)',
+            online: true,
+            on: true
+          }]
+        })
+      });
+    });
+
+    await page.goto('/');
+    await page.waitForSelector('.bulb-card');
+
+    // Should show power and test buttons
+    await expect(page.locator('.power-btn')).toBeVisible();
+    await expect(page.locator('.test-btn')).toBeVisible();
+
+    // Should NOT show firmware button
+    await expect(page.locator('.firmware-btn')).not.toBeVisible();
+  });
+
+  test('should show normal controls when firmware version is unknown', async ({ page }) => {
+    await page.route('**/api/list', route => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          bulbs: [{
+            id: 'test-bulb-unknown-firmware',
+            name: 'Unknown Firmware Bulb',
+            lastIp: '192.168.1.102',
+            lastSeen: new Date().toISOString(),
+            firmwareVersion: null,
+            online: true,
+            on: false
+          }]
+        })
+      });
+    });
+
+    await page.goto('/');
+    await page.waitForSelector('.bulb-card');
+
+    // Should show power and test buttons (don't block when unknown)
+    await expect(page.locator('.power-btn')).toBeVisible();
+    await expect(page.locator('.test-btn')).toBeVisible();
+
+    // Should NOT show firmware button
+    await expect(page.locator('.firmware-btn')).not.toBeVisible();
+  });
+});
+
+test.describe('Clickable IP Address', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await page.waitForResponse(response =>
+      response.url().includes('/api/list') && response.status() === 200
+    );
+  });
+
+  test('should have clickable IP address in bulb card', async ({ page }) => {
+    // Find the IP link in the first bulb card
+    const bulbCard = page.locator('.bulb-card').first();
+    const ipLink = bulbCard.locator('.ip-link');
+
+    // Check if IP is present (some bulbs may not have an IP)
+    const count = await ipLink.count();
+    if (count > 0) {
+      // Verify it's a link with correct attributes
+      await expect(ipLink).toHaveAttribute('target', '_blank');
+      await expect(ipLink).toHaveAttribute('rel', 'noopener noreferrer');
+
+      // Get the href and verify it starts with http://
+      const href = await ipLink.getAttribute('href');
+      expect(href).toMatch(/^http:\/\/\d+\.\d+\.\d+\.\d+$/);
+    }
+  });
+
+  test('should have clickable IP address in modal', async ({ page }) => {
+    // Open the modal
+    await page.locator('.bulb-card').first().click();
+    await expect(page.locator('.modal')).toBeVisible();
+
+    // Find the IP link in the modal info section
+    const modal = page.locator('.modal');
+    const ipLink = modal.locator('.ip-link');
+
+    // Check if IP is present
+    const count = await ipLink.count();
+    if (count > 0) {
+      // Verify it's a link with correct attributes
+      await expect(ipLink).toHaveAttribute('target', '_blank');
+      await expect(ipLink).toHaveAttribute('rel', 'noopener noreferrer');
+
+      // Get the href and verify it starts with http://
+      const href = await ipLink.getAttribute('href');
+      expect(href).toMatch(/^http:\/\/\d+\.\d+\.\d+\.\d+$/);
+    }
+  });
+
+  test('should not navigate card when clicking IP address', async ({ page }) => {
+    // This test verifies that clicking the IP link doesn't trigger the card click handler
+    const bulbCard = page.locator('.bulb-card').first();
+    const ipLink = bulbCard.locator('.ip-link');
+
+    const count = await ipLink.count();
+    if (count > 0) {
+      // We'll intercept the navigation to prevent actually leaving the page
+      await page.route('http://**', route => route.abort());
+
+      // Click the IP link
+      await ipLink.click();
+
+      // The modal should NOT have opened (card click was not triggered)
+      await expect(page.locator('.modal')).not.toBeVisible();
+    }
+  });
+});
+
 test.describe('Theme Toggle', () => {
   test.beforeEach(async ({ page }) => {
     // Clear localStorage before each test

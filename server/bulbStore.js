@@ -22,6 +22,7 @@ class BulbStore {
           name: bulb.name || bulb.id,
           lastSeen: bulb.lastSeen || null,
           lastIp: bulb.lastIp || null,
+          firmwareVersion: bulb.firmwareVersion || null,
           online: false
         });
       }
@@ -43,7 +44,8 @@ class BulbStore {
       id: bulb.id,
       name: bulb.name,
       lastSeen: bulb.lastSeen,
-      lastIp: bulb.lastIp
+      lastIp: bulb.lastIp,
+      firmwareVersion: bulb.firmwareVersion
     }));
 
     await fs.writeFile(BULB_FILE, JSON.stringify(bulbArray, null, 2));
@@ -64,9 +66,19 @@ class BulbStore {
         name: id,
         lastSeen: now,
         lastIp: ip,
+        firmwareVersion: null,
         online: true
       });
     }
+  }
+
+  updateFirmwareVersion(id, firmwareVersion) {
+    const bulb = this.bulbs.get(id);
+    if (bulb) {
+      bulb.firmwareVersion = firmwareVersion;
+      return true;
+    }
+    return false;
   }
 
   markAllOffline() {
