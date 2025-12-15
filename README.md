@@ -444,11 +444,11 @@ The script:
 
 ### ESPHome API
 
-Kauf Bulbs expose a REST API via ESPHome:
+Kauf Bulbs expose a REST API via ESPHome. The endpoint path follows the pattern `/light/<entity_id>/...` where `<entity_id>` is defined in the device's ESPHome configuration. For Kauf bulbs, this is `kauf_bulb`:
 
-- `POST /light/light/turn_on?brightness=255&r=255&g=0&b=0&transition=1`
-- `POST /light/light/turn_off?transition=1`
-- `GET /light/light` - Returns current state
+- `POST /light/kauf_bulb/turn_on?brightness=255&r=255&g=0&b=0&transition=1`
+- `POST /light/kauf_bulb/turn_off?transition=1`
+- `GET /light/kauf_bulb` - Returns current state
 
 ### mDNS Discovery
 
