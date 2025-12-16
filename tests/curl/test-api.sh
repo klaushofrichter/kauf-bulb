@@ -176,7 +176,54 @@ STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/b
   -d "{\"name\": \"$ORIGINAL_NAME\"}")
 test_endpoint "POST /api/bulb/:id/name (restore)" 200 "$STATUS"
 
-# Test 15: Error cases
+# Test 15: Push/Pop state stack
+echo ""
+echo "--- Push/Pop State Stack ---"
+
+# Turn on with known color first
+curl $CURL_OPTS -o /dev/null -X POST "$BASE_URL/api/bulb/$BULB_ID/control" \
+  -H "Content-Type: application/json" \
+  -d '{"state": "on", "brightness": 80, "r": 255, "g": 200, "b": 100}'
+sleep 1
+
+# Push state
+STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/bulb/$BULB_ID/push" \
+  -H "Content-Type: application/json" \
+  -d '{"transition": 500}')
+test_endpoint "POST /api/bulb/:id/push" 200 "$STATUS"
+
+# Change to different color
+curl $CURL_OPTS -o /dev/null -X POST "$BASE_URL/api/bulb/$BULB_ID/control" \
+  -H "Content-Type: application/json" \
+  -d '{"state": "on", "brightness": 50, "r": 0, "g": 0, "b": 255}'
+sleep 1
+
+# Pop state (restore)
+STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/bulb/$BULB_ID/pop")
+test_endpoint "POST /api/bulb/:id/pop (restore)" 200 "$STATUS"
+sleep 1
+
+# Pop from empty stack
+STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/bulb/$BULB_ID/pop")
+test_endpoint "POST /api/bulb/:id/pop (empty stack)" 200 "$STATUS"
+
+# Test 16: Push-Set (combined push + control)
+echo ""
+echo "--- Push-Set Combined Endpoint ---"
+
+# Push and set to red
+STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/bulb/$BULB_ID/push-set" \
+  -H "Content-Type: application/json" \
+  -d '{"state": "on", "brightness": 100, "r": 255, "g": 0, "b": 0, "transition": 300}')
+test_endpoint "POST /api/bulb/:id/push-set (red)" 200 "$STATUS"
+sleep 1
+
+# Pop to restore
+STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/bulb/$BULB_ID/pop")
+test_endpoint "POST /api/bulb/:id/pop (restore after push-set)" 200 "$STATUS"
+sleep 1
+
+# Test 17: Error cases
 echo ""
 echo "--- Error Cases ---"
 STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" "$BASE_URL/api/on?device=invalid-bulb-id")

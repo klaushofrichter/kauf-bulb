@@ -315,4 +315,218 @@ describe('Kauf Bulb Integration Tests', () => {
       console.log(`  ✓ Offline bulb correctly rejected`);
     });
   });
+
+  describe('Push/Pop State Stack', () => {
+    it('should push current state to stack', { timeout: 10000 }, async () => {
+      if (onlineBulbs.length === 0) {
+        console.log('Skipping: No online bulb available');
+        return;
+      }
+
+      const testBulbId = onlineBulbs[0].id;
+      console.log(`Testing push state for ${testBulbId}...`);
+
+      // Push current state
+      const response = await apiPost(`/api/bulb/${testBulbId}/push`, { transition: 500 });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('State pushed to stack');
+      expect(response.body.stackSize).toBeGreaterThanOrEqual(1);
+      expect(response.body.state).toBeDefined();
+
+      console.log(`  ✓ ${testBulbId} state pushed (stack size: ${response.body.stackSize})`);
+    });
+
+    it('should push and pop state, restoring original settings', { timeout: 20000 }, async () => {
+      if (onlineBulbs.length === 0) {
+        console.log('Skipping: No online bulb available');
+        return;
+      }
+
+      const testBulbId = onlineBulbs[0].id;
+      console.log(`Testing push/pop cycle for ${testBulbId}...`);
+
+      // Set bulb to a known state (on, orange, 80%)
+      await apiPost(`/api/bulb/${testBulbId}/control`, {
+        state: 'on',
+        brightness: 80,
+        r: 255,
+        g: 128,
+        b: 0
+      });
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Push the state
+      const pushResponse = await apiPost(`/api/bulb/${testBulbId}/push`, { transition: 300 });
+      expect(pushResponse.status).toBe(200);
+      console.log(`  - Pushed state: on=${pushResponse.body.state.on}, brightness=${pushResponse.body.state.brightness}`);
+
+      // Change the bulb to a different state (blue, 50%)
+      await apiPost(`/api/bulb/${testBulbId}/control`, {
+        state: 'on',
+        brightness: 50,
+        r: 0,
+        g: 0,
+        b: 255
+      });
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Verify the bulb changed
+      const changedState = await apiGet(`/api/bulb/${testBulbId}/state`);
+      expect(changedState.body.state.b).toBeGreaterThan(changedState.body.state.r);
+      console.log(`  - Changed to blue`);
+
+      // Pop the state (should restore to orange)
+      const popResponse = await apiPost(`/api/bulb/${testBulbId}/pop`, {});
+      expect(popResponse.status).toBe(200);
+      expect(popResponse.body.success).toBe(true);
+      expect(popResponse.body.restored).toBe(true);
+      console.log(`  - Popped state: restoring to on=${popResponse.body.state.on}`);
+
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Verify the bulb is restored to orange
+      const restoredState = await apiGet(`/api/bulb/${testBulbId}/state`);
+      expect(restoredState.body.state.on).toBe(true);
+      // Should be more red than blue (orange)
+      expect(restoredState.body.state.r).toBeGreaterThan(restoredState.body.state.b);
+
+      console.log(`  ✓ ${testBulbId} state restored successfully`);
+    });
+
+    it('should return empty stack message when nothing to pop', async () => {
+      if (onlineBulbs.length === 0) {
+        console.log('Skipping: No online bulb available');
+        return;
+      }
+
+      // Use a different bulb ID to ensure empty stack
+      const testBulbId = onlineBulbs[onlineBulbs.length - 1].id;
+      console.log(`Testing empty pop for ${testBulbId}...`);
+
+      // Clear any existing state by popping until empty
+      let popResult;
+      do {
+        popResult = await apiPost(`/api/bulb/${testBulbId}/pop`, {});
+      } while (popResult.body.restored);
+
+      // Now pop from empty stack
+      const response = await apiPost(`/api/bulb/${testBulbId}/pop`, {});
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('Stack is empty, no change made');
+      expect(response.body.restored).toBe(false);
+
+      console.log(`  ✓ Empty stack handled correctly`);
+    });
+
+    it('should return 404 for non-existent bulb on push', async () => {
+      const response = await apiPost('/api/bulb/non-existent-bulb/push', {});
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe('Device not found');
+    });
+
+    it('should return 404 for non-existent bulb on pop', async () => {
+      const response = await apiPost('/api/bulb/non-existent-bulb/pop', {});
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe('Device not found');
+    });
+  });
+
+  describe('Push-Set Combined Endpoint', () => {
+    it('should push state and apply new settings in one call', { timeout: 15000 }, async () => {
+      if (onlineBulbs.length === 0) {
+        console.log('Skipping: No online bulb available');
+        return;
+      }
+
+      const testBulbId = onlineBulbs[0].id;
+      console.log(`Testing push-set for ${testBulbId}...`);
+
+      // Push current state and set to red
+      const response = await apiPost(`/api/bulb/${testBulbId}/push-set`, {
+        state: 'on',
+        brightness: 100,
+        r: 255,
+        g: 0,
+        b: 0,
+        transition: 300
+      });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('State pushed and new settings applied');
+      expect(response.body.stackSize).toBeGreaterThanOrEqual(1);
+      expect(response.body.previousState).toBeDefined();
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Verify bulb is red
+      const stateResponse = await apiGet(`/api/bulb/${testBulbId}/state`);
+      expect(stateResponse.body.state.on).toBe(true);
+      expect(stateResponse.body.state.r).toBeGreaterThan(stateResponse.body.state.b);
+
+      console.log(`  ✓ ${testBulbId} push-set applied successfully`);
+    });
+
+    it('should allow pop to restore after push-set', { timeout: 20000 }, async () => {
+      if (onlineBulbs.length === 0) {
+        console.log('Skipping: No online bulb available');
+        return;
+      }
+
+      const testBulbId = onlineBulbs[0].id;
+      console.log(`Testing push-set + pop for ${testBulbId}...`);
+
+      // Set to a known state first (white, 60%)
+      await apiPost(`/api/bulb/${testBulbId}/control`, {
+        state: 'on',
+        brightness: 60,
+        r: 255,
+        g: 255,
+        b: 255
+      });
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Push and set to blue
+      const pushSetResponse = await apiPost(`/api/bulb/${testBulbId}/push-set`, {
+        state: 'on',
+        brightness: 100,
+        r: 0,
+        g: 0,
+        b: 255,
+        transition: 300
+      });
+      expect(pushSetResponse.body.success).toBe(true);
+      console.log(`  - Pushed white state, set to blue`);
+
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Pop to restore white
+      const popResponse = await apiPost(`/api/bulb/${testBulbId}/pop`, {});
+      expect(popResponse.body.success).toBe(true);
+      expect(popResponse.body.restored).toBe(true);
+      console.log(`  - Popped to restore white`);
+
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Verify restored to white (r and g should equal b, not blue-dominant)
+      const stateResponse = await apiGet(`/api/bulb/${testBulbId}/state`);
+      // White means r >= b (blue was 255, 0, 0 before restore)
+      expect(stateResponse.body.state.r).toBeGreaterThanOrEqual(stateResponse.body.state.b);
+      expect(stateResponse.body.state.g).toBeGreaterThanOrEqual(stateResponse.body.state.b);
+
+      console.log(`  ✓ ${testBulbId} push-set + pop cycle completed`);
+    });
+
+    it('should return 404 for non-existent bulb', async () => {
+      const response = await apiPost('/api/bulb/non-existent-bulb/push-set', {
+        brightness: 50
+      });
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe('Device not found');
+    });
+  });
 });

@@ -151,6 +151,50 @@ test.describe('Bulb Controls', () => {
       await expect(testButton).toHaveText('Test', { timeout: 10000 });
     }
   });
+
+  test('should restore bulb state after test cycle completes', async ({ page }) => {
+    // Find the first online bulb card with enabled Test button
+    const bulbCard = page.locator('.bulb-card').first();
+    const testButton = bulbCard.getByRole('button', { name: 'Test' });
+
+    // Check if the button is enabled
+    const isDisabled = await testButton.getAttribute('disabled');
+    if (isDisabled === null) {
+      // Get the initial border color style (represents bulb color)
+      const initialBorderColor = await bulbCard.evaluate(el => el.style.borderColor);
+
+      // Get initial on/off state from the status text
+      const statusText = bulbCard.locator('.status-text');
+      const initialStatus = await statusText.textContent();
+
+      // Click Test button and wait for test API call
+      const testResponsePromise = page.waitForResponse(response =>
+        response.url().includes('/api/bulb/') && response.url().includes('/test') && response.status() === 200
+      );
+
+      await testButton.click();
+
+      // Wait for test to complete
+      await testResponsePromise;
+
+      // Wait for the refresh API call that happens after test completes
+      const listResponsePromise = page.waitForResponse(response =>
+        response.url().includes('/api/list') && response.status() === 200
+      );
+      await listResponsePromise;
+
+      // Wait for button to return to "Test" state
+      await expect(testButton).toHaveText('Test', { timeout: 10000 });
+
+      // Verify the bulb state is restored - border color should match initial
+      const finalBorderColor = await bulbCard.evaluate(el => el.style.borderColor);
+      expect(finalBorderColor).toBe(initialBorderColor);
+
+      // Verify the on/off status is restored
+      const finalStatus = await statusText.textContent();
+      expect(finalStatus).toBe(initialStatus);
+    }
+  });
 });
 
 test.describe('Bulb Modal', () => {

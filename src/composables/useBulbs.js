@@ -185,6 +185,40 @@ export function useBulbs() {
     }
   }
 
+  async function pushState(deviceId, options = {}) {
+    try {
+      const response = await fetch(`/api/bulb/${deviceId}/push`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(options)
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || `HTTP ${response.status}`);
+      }
+      return await response.json();
+    } catch (err) {
+      console.error('pushState error:', err);
+      throw err;
+    }
+  }
+
+  async function popState(deviceId) {
+    try {
+      const response = await fetch(`/api/bulb/${deviceId}/pop`, {
+        method: 'POST'
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || `HTTP ${response.status}`);
+      }
+      return await response.json();
+    } catch (err) {
+      console.error('popState error:', err);
+      throw err;
+    }
+  }
+
   function clearError() {
     error.value = null;
   }
@@ -202,6 +236,8 @@ export function useBulbs() {
     getBulbState,
     getDeviceInfo,
     testBulb,
+    pushState,
+    popState,
     clearError
   };
 }

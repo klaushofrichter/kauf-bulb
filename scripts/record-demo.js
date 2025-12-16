@@ -107,24 +107,24 @@ async function setupInitialState() {
 
   console.log(`Found ${bulbs.length} bulb(s)`);
 
-  // Set first bulb: ON, white, 70% brightness
+  // Set first bulb: ON, white, 50% brightness
   if (bulbs[0]) {
     await fetch(`${BASE_URL}/api/bulb/${bulbs[0].id}/control`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ state: 'on', brightness: 70, r: 255, g: 255, b: 255, transition: 500 })
+      body: JSON.stringify({ state: 'on', brightness: 50, r: 255, g: 255, b: 255, transition: 500 })
     });
-    console.log(`  ${bulbs[0].id}: ON, white, 70%`);
+    console.log(`  ${bulbs[0].id}: ON, white, 50%`);
   }
 
-  // Set second bulb: OFF
+  // Set second bulb: ON, white, 50% brightness
   if (bulbs[1]) {
     await fetch(`${BASE_URL}/api/bulb/${bulbs[1].id}/control`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ state: 'off', transition: 500 })
+      body: JSON.stringify({ state: 'on', brightness: 50, r: 255, g: 255, b: 255, transition: 500 })
     });
-    console.log(`  ${bulbs[1].id}: OFF`);
+    console.log(`  ${bulbs[1].id}: ON, white, 50%`);
   }
 
   await sleep(1000);
@@ -155,19 +155,17 @@ async function recordDemo() {
 
   const page = await context.newPage();
 
-  // Add cursor visualization
-  await page.addStyleTag({ content: CURSOR_CSS });
-
-  // Navigate to app
+  // Set theme to light mode BEFORE navigating (so Vue component picks it up on mount)
   await page.goto(BASE_URL);
-  await page.addStyleTag({ content: CURSOR_CSS });
-  await page.evaluate(CURSOR_SCRIPT);
-
-  // Set theme to light mode for consistent demo appearance
   await page.evaluate(() => {
     localStorage.setItem('kauf-bulb-theme', 'light');
-    document.documentElement.setAttribute('data-theme', 'light');
   });
+  // Reload to apply the theme setting
+  await page.reload();
+
+  // Add cursor visualization
+  await page.addStyleTag({ content: CURSOR_CSS });
+  await page.evaluate(CURSOR_SCRIPT);
 
   // Wait for bulbs to load and be online (status class is 'on' or 'off' when online)
   console.log('Waiting for bulbs to come online...');
@@ -289,9 +287,16 @@ async function recordDemo() {
     await clickAt(page, '.close-btn');
     await sleep(1500);
 
-    // 11. Click Refresh Status
-    console.log('  - Refresh status');
-    await clickAt(page, 'button:has-text("Refresh Status")');
+    // 11. Click Refresh Devices and wait for completion
+    console.log('  - Refresh Devices (waiting for completion...)');
+    await clickAt(page, 'button:has-text("Refresh Devices")');
+    // Wait for refresh to complete - buttons become enabled again when not disabled
+    await page.waitForSelector('button:has-text("Refresh Devices"):not([disabled])', { timeout: 15000 });
+    await sleep(1000);
+
+    // 12. Click Theme button to switch to Dark theme
+    console.log('  - Switch to Dark theme');
+    await clickAt(page, '.theme-toggle');
     await sleep(1500);
 
   } catch (e) {

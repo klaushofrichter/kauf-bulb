@@ -275,6 +275,107 @@ Response:
 { "device": "kauf-bulb-abc123", "name": "Living Room Lamp" }
 ```
 
+#### Push State to Stack
+```
+POST /api/bulb/:id/push
+Content-Type: application/json
+
+{
+  "transition": 1000
+}
+```
+Saves the current bulb state (on/off, brightness, color) to an in-memory stack. Each bulb has its own stack with a maximum of 50 states. Useful for temporarily changing bulb settings and restoring them later.
+
+Response:
+```json
+{
+  "device": "kauf-bulb-abc123",
+  "success": true,
+  "message": "State pushed to stack",
+  "stackSize": 1,
+  "state": {
+    "on": true,
+    "brightness": 80,
+    "r": 255,
+    "g": 200,
+    "b": 150
+  }
+}
+```
+
+#### Pop State from Stack
+```
+POST /api/bulb/:id/pop
+```
+Restores the most recently pushed state from the stack and removes it. If the stack is empty, no change is made.
+
+Response (state restored):
+```json
+{
+  "device": "kauf-bulb-abc123",
+  "success": true,
+  "message": "State restored from stack",
+  "stackSize": 0,
+  "restored": true,
+  "state": {
+    "on": true,
+    "brightness": 80,
+    "r": 255,
+    "g": 200,
+    "b": 150,
+    "transition": 1000
+  }
+}
+```
+
+Response (empty stack):
+```json
+{
+  "device": "kauf-bulb-abc123",
+  "success": true,
+  "message": "Stack is empty, no change made",
+  "stackSize": 0,
+  "restored": false
+}
+```
+
+#### Push State and Set (Combined Push + Control)
+```
+POST /api/bulb/:id/push-set
+Content-Type: application/json
+
+{
+  "state": "on",
+  "brightness": 100,
+  "r": 255,
+  "g": 0,
+  "b": 0,
+  "transition": 500
+}
+```
+Combines push and control in a single call: saves the current bulb state to the stack, then applies the new settings. Useful for temporarily changing the bulb (e.g., flash red for an alert) and restoring later with pop.
+
+Response:
+```json
+{
+  "device": "kauf-bulb-abc123",
+  "success": true,
+  "message": "State pushed and new settings applied",
+  "stackSize": 1,
+  "previousState": {
+    "on": true,
+    "brightness": 80,
+    "r": 255,
+    "g": 255,
+    "b": 255
+  },
+  "controlResult": {
+    "success": true,
+    "ip": "192.168.1.100"
+  }
+}
+```
+
 ### API Examples with curl
 
 A test script with all curl commands is available at `tests/curl/test-api.sh`. Run with `npm run test:curl`.
@@ -329,6 +430,19 @@ curl -X POST http://localhost:3001/api/bulb/kauf-bulb-abc123/control \
 curl -X POST http://localhost:3001/api/bulb/kauf-bulb-abc123/name \
   -H "Content-Type: application/json" \
   -d '{"name": "Living Room Lamp"}'
+
+# Push current state to stack (save for later)
+curl -X POST http://localhost:3001/api/bulb/kauf-bulb-abc123/push \
+  -H "Content-Type: application/json" \
+  -d '{"transition": 500}'
+
+# Pop and restore state from stack
+curl -X POST http://localhost:3001/api/bulb/kauf-bulb-abc123/pop
+
+# Push current state and set new color (combined push + control)
+curl -X POST http://localhost:3001/api/bulb/kauf-bulb-abc123/push-set \
+  -H "Content-Type: application/json" \
+  -d '{"state": "on", "brightness": 100, "r": 255, "g": 0, "b": 0, "transition": 500}'
 ```
 
 ## Configuration

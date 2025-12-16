@@ -11,7 +11,7 @@ const props = defineProps({
 
 const emit = defineEmits(['click']);
 
-const { turnOn, turnOff, testBulb: apiTestBulb } = useBulbs();
+const { turnOn, turnOff, testBulb: apiTestBulb, fetchBulbs, pushState, popState } = useBulbs();
 const isLoading = ref(false);
 const isTesting = ref(false);
 const testColor = ref(null);
@@ -124,10 +124,20 @@ async function testBulb(event) {
   };
 
   try {
+    // Push current state to stack before testing
+    await pushState(props.bulb.id, { transition: 100 });
+
+    // Run the test animation (server-side test and local animation)
     await Promise.all([
       apiTestBulb(props.bulb.id),
       animateColors()
     ]);
+
+    // Pop and restore the original state from stack
+    await popState(props.bulb.id);
+
+    // Refresh bulb data to show restored state (color and on/off)
+    await fetchBulbs();
   } catch (err) {
     console.error('Test failed:', err);
   } finally {

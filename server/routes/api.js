@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { bulbStore } from '../bulbStore.js';
 import { refreshDiscovery } from '../discovery.js';
 import * as bulbController from '../bulbController.js';
+import { bulbStateStack } from '../bulbStateStack.js';
 
 const router = Router();
 
@@ -193,6 +194,136 @@ router.post('/bulb/:id/name', async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: 'Failed to save changes' });
   }
+});
+
+// Push current bulb state to stack
+router.post('/bulb/:id/push', async (req, res) => {
+  const bulb = bulbStore.getBulb(req.params.id);
+  if (!bulb) {
+    return res.status(404).json({ error: 'Device not found' });
+  }
+  if (!bulb.online || !bulb.lastIp) {
+    return res.status(503).json({ error: 'Device is offline' });
+  }
+
+  // Get current state from bulb
+  const stateResult = await bulbController.getState(bulb.lastIp);
+  if (!stateResult.success) {
+    return res.status(500).json({ error: 'Failed to get current state', details: stateResult.error });
+  }
+
+  // Push state to stack
+  const stackSize = bulbStateStack.push(req.params.id, {
+    on: stateResult.state.on,
+    brightness: stateResult.state.brightness,
+    r: stateResult.state.r,
+    g: stateResult.state.g,
+    b: stateResult.state.b,
+    transition: req.body.transition ?? 1000
+  });
+
+  res.json({
+    device: req.params.id,
+    success: true,
+    message: 'State pushed to stack',
+    stackSize,
+    state: stateResult.state
+  });
+});
+
+// Pop and restore bulb state from stack
+router.post('/bulb/:id/pop', async (req, res) => {
+  const bulb = bulbStore.getBulb(req.params.id);
+  if (!bulb) {
+    return res.status(404).json({ error: 'Device not found' });
+  }
+  if (!bulb.online || !bulb.lastIp) {
+    return res.status(503).json({ error: 'Device is offline' });
+  }
+
+  // Pop state from stack
+  const state = bulbStateStack.pop(req.params.id);
+  if (!state) {
+    return res.json({
+      device: req.params.id,
+      success: true,
+      message: 'Stack is empty, no change made',
+      stackSize: 0,
+      restored: false
+    });
+  }
+
+  // Restore the state
+  let result;
+  if (state.on) {
+    result = await bulbController.turnOn(bulb.lastIp, {
+      brightness: state.brightness,
+      r: state.r,
+      g: state.g,
+      b: state.b,
+      transition: state.transition
+    });
+  } else {
+    result = await bulbController.turnOff(bulb.lastIp, {
+      transition: state.transition
+    });
+  }
+
+  res.json({
+    device: req.params.id,
+    success: result.success,
+    message: result.success ? 'State restored from stack' : 'Failed to restore state',
+    stackSize: bulbStateStack.size(req.params.id),
+    restored: true,
+    state
+  });
+});
+
+// Push current state and apply new control settings (combined push + control)
+router.post('/bulb/:id/push-set', async (req, res) => {
+  const bulb = bulbStore.getBulb(req.params.id);
+  if (!bulb) {
+    return res.status(404).json({ error: 'Device not found' });
+  }
+  if (!bulb.online || !bulb.lastIp) {
+    return res.status(503).json({ error: 'Device is offline' });
+  }
+
+  // Get current state from bulb
+  const stateResult = await bulbController.getState(bulb.lastIp);
+  if (!stateResult.success) {
+    return res.status(500).json({ error: 'Failed to get current state', details: stateResult.error });
+  }
+
+  // Push current state to stack (use transition from request for restore)
+  const { state, brightness, r, g, b, transition } = req.body;
+  const stackSize = bulbStateStack.push(req.params.id, {
+    on: stateResult.state.on,
+    brightness: stateResult.state.brightness,
+    r: stateResult.state.r,
+    g: stateResult.state.g,
+    b: stateResult.state.b,
+    transition: transition ?? 1000
+  });
+
+  // Apply new control settings
+  const controlResult = await bulbController.control(bulb.lastIp, {
+    state,
+    brightness,
+    r,
+    g,
+    b,
+    transition
+  });
+
+  res.json({
+    device: req.params.id,
+    success: controlResult.success,
+    message: controlResult.success ? 'State pushed and new settings applied' : 'State pushed but control failed',
+    stackSize,
+    previousState: stateResult.state,
+    controlResult
+  });
 });
 
 export default router;
