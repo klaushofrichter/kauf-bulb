@@ -2,7 +2,7 @@
 
 A local Node.js server and Vue.js web application for discovering and controlling [Kauf RGBWW Smart Bulbs](https://kaufha.com/) on your home network.
 
-![Dev Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fklaushofrichter%2Fkauf-bulb%2Frefs%2Fheads%2Fdevelop%2Fpackage.json&query=version&label=develop&color=%2333ca55) 
+![Dev Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fklaushofrichter%2Fkauf-bulb%2Frefs%2Fheads%2Fdevelop%2Fpackage.json&query=version&label=develop&color=%2333ca55)
 
 
 [![Watch demo on YouTube](https://img.youtube.com/vi/-kE1l3B1KBo/maxresdefault.jpg)](https://youtu.be/-kE1l3B1KBo)
@@ -102,7 +102,7 @@ The application will be available at http://localhost:3001
 
 ### API Endpoints
 
-All endpoints are prefixed with `/api`.
+All endpoints are prefixed with `/api`. All state-changing operations use POST method.
 
 #### List Bulbs
 ```
@@ -113,6 +113,7 @@ Returns all known bulbs with their current state.
 Response:
 ```json
 {
+  "success": true,
   "bulbs": [
     {
       "id": "kauf-bulb-abc123",
@@ -130,39 +131,70 @@ Response:
 }
 ```
 
-#### Turn On
+#### Turn On All Bulbs
 ```
-GET /api/on                     # Turn on all bulbs
-GET /api/on?device=<id>         # Turn on specific bulb
-GET /api/on?transition=2000     # With 2-second transition
-```
+POST /api/bulbs/on
+Content-Type: application/json
 
-Response (all bulbs):
+{
+  "transition": 2000
+}
+```
+Turns on all online bulbs. The `transition` parameter is optional (in milliseconds).
+
+Response:
 ```json
 {
+  "success": true,
   "results": [
-    { "device": "kauf-bulb-abc123", "success": true, "ip": "192.168.1.100" },
-    { "device": "kauf-bulb-def456", "success": true, "ip": "192.168.1.101" }
+    { "id": "kauf-bulb-abc123", "success": true, "ip": "192.168.1.100" },
+    { "id": "kauf-bulb-def456", "success": true, "ip": "192.168.1.101" }
   ]
 }
 ```
 
-Response (specific bulb):
+#### Turn Off All Bulbs
+```
+POST /api/bulbs/off
+Content-Type: application/json
+
+{
+  "transition": 2000
+}
+```
+Turns off all online bulbs.
+
+Response format is the same as Turn On All.
+
+#### Turn On Specific Bulb
+```
+POST /api/bulb/:id/on
+Content-Type: application/json
+
+{
+  "transition": 2000
+}
+```
+
+Response:
 ```json
-{ "device": "kauf-bulb-abc123", "success": true, "ip": "192.168.1.100" }
+{ "id": "kauf-bulb-abc123", "success": true, "ip": "192.168.1.100" }
 ```
 
-#### Turn Off
+#### Turn Off Specific Bulb
 ```
-GET /api/off                    # Turn off all bulbs
-GET /api/off?device=<id>        # Turn off specific bulb
+POST /api/bulb/:id/off
+Content-Type: application/json
+
+{
+  "transition": 2000
+}
 ```
 
-Response format is the same as Turn On.
+Response format is the same as Turn On Specific.
 
 #### Refresh Discovery
 ```
-GET /api/refresh
 POST /api/refresh
 ```
 Triggers mDNS discovery and waits for devices to respond. This is a **blocking call** that takes ~5 seconds (15-second max timeout). Returns the updated bulb list directly, eliminating the need for a separate `/api/list` call. Discovery also runs automatically every 60 seconds in the background.
@@ -170,9 +202,10 @@ Triggers mDNS discovery and waits for devices to respond. This is a **blocking c
 Response:
 ```json
 {
+  "success": true,
   "message": "Discovery completed",
   "bulbs": [...],
-  "devicesFound": 2,
+  "bulbsFound": 2,
   "duration": 5003
 }
 ```
@@ -186,7 +219,7 @@ Returns the current state of a specific bulb.
 Response:
 ```json
 {
-  "device": "kauf-bulb-abc123",
+  "id": "kauf-bulb-abc123",
   "bulb": {
     "id": "kauf-bulb-abc123",
     "name": "Living Room",
@@ -215,7 +248,7 @@ Returns firmware version, ESPHome version, and MAC address.
 Response:
 ```json
 {
-  "device": "kauf-bulb-abc123",
+  "id": "kauf-bulb-abc123",
   "success": true,
   "ip": "192.168.1.100",
   "info": {
@@ -237,16 +270,16 @@ Cycles the bulb through red, green, blue colors for identification.
 
 Response:
 ```json
-{ "device": "kauf-bulb-abc123", "success": true, "ip": "192.168.1.100" }
+{ "id": "kauf-bulb-abc123", "success": true, "ip": "192.168.1.100" }
 ```
 
-#### Advanced Control
+#### Set Bulb State
 ```
-POST /api/bulb/:id/control
+POST /api/bulb/:id/set
 Content-Type: application/json
 
 {
-  "state": "on",
+  "on": true,
   "brightness": 75,
   "r": 255,
   "g": 128,
@@ -254,10 +287,15 @@ Content-Type: application/json
   "transition": 1000
 }
 ```
+Sets the bulb state. All parameters are optional:
+- `on`: `true` to turn on, `false` to turn off
+- `brightness`: 0-100
+- `r`, `g`, `b`: 0-255
+- `transition`: milliseconds
 
 Response:
 ```json
-{ "device": "kauf-bulb-abc123", "success": true, "ip": "192.168.1.100" }
+{ "id": "kauf-bulb-abc123", "success": true, "ip": "192.168.1.100" }
 ```
 
 #### Update Bulb Name
@@ -272,7 +310,7 @@ Content-Type: application/json
 
 Response:
 ```json
-{ "device": "kauf-bulb-abc123", "name": "Living Room Lamp" }
+{ "success": true, "id": "kauf-bulb-abc123", "name": "Living Room Lamp" }
 ```
 
 #### Push State to Stack
@@ -289,8 +327,8 @@ Saves the current bulb state (on/off, brightness, color) to an in-memory stack. 
 Response:
 ```json
 {
-  "device": "kauf-bulb-abc123",
   "success": true,
+  "id": "kauf-bulb-abc123",
   "message": "State pushed to stack",
   "stackSize": 1,
   "state": {
@@ -312,8 +350,8 @@ Restores the most recently pushed state from the stack and removes it. If the st
 Response (state restored):
 ```json
 {
-  "device": "kauf-bulb-abc123",
   "success": true,
+  "id": "kauf-bulb-abc123",
   "message": "State restored from stack",
   "stackSize": 0,
   "restored": true,
@@ -331,21 +369,21 @@ Response (state restored):
 Response (empty stack):
 ```json
 {
-  "device": "kauf-bulb-abc123",
   "success": true,
+  "id": "kauf-bulb-abc123",
   "message": "Stack is empty, no change made",
   "stackSize": 0,
   "restored": false
 }
 ```
 
-#### Push State and Set (Combined Push + Control)
+#### Push State and Set (Combined Push + Set)
 ```
 POST /api/bulb/:id/push-set
 Content-Type: application/json
 
 {
-  "state": "on",
+  "on": true,
   "brightness": 100,
   "r": 255,
   "g": 0,
@@ -353,13 +391,13 @@ Content-Type: application/json
   "transition": 500
 }
 ```
-Combines push and control in a single call: saves the current bulb state to the stack, then applies the new settings. Useful for temporarily changing the bulb (e.g., flash red for an alert) and restoring later with pop.
+Combines push and set in a single call: saves the current bulb state to the stack, then applies the new settings. Useful for temporarily changing the bulb (e.g., flash red for an alert) and restoring later with pop.
 
 Response:
 ```json
 {
-  "device": "kauf-bulb-abc123",
   "success": true,
+  "id": "kauf-bulb-abc123",
   "message": "State pushed and new settings applied",
   "stackSize": 1,
   "previousState": {
@@ -369,7 +407,7 @@ Response:
     "g": 255,
     "b": 255
   },
-  "controlResult": {
+  "setResult": {
     "success": true,
     "ip": "192.168.1.100"
   }
@@ -385,22 +423,32 @@ A test script with all curl commands is available at `tests/curl/test-api.sh`. R
 curl http://localhost:3001/api/list
 
 # Turn on all bulbs
-curl http://localhost:3001/api/on
+curl -X POST http://localhost:3001/api/bulbs/on \
+  -H "Content-Type: application/json" \
+  -d '{}'
 
 # Turn off all bulbs
-curl http://localhost:3001/api/off
+curl -X POST http://localhost:3001/api/bulbs/off \
+  -H "Content-Type: application/json" \
+  -d '{}'
 
 # Turn on a specific bulb
-curl "http://localhost:3001/api/on?device=kauf-bulb-abc123"
+curl -X POST http://localhost:3001/api/bulb/kauf-bulb-abc123/on \
+  -H "Content-Type: application/json" \
+  -d '{}'
 
 # Turn off a specific bulb
-curl "http://localhost:3001/api/off?device=kauf-bulb-abc123"
+curl -X POST http://localhost:3001/api/bulb/kauf-bulb-abc123/off \
+  -H "Content-Type: application/json" \
+  -d '{}'
 
 # Turn on with custom transition (2 seconds)
-curl "http://localhost:3001/api/on?device=kauf-bulb-abc123&transition=2000"
+curl -X POST http://localhost:3001/api/bulb/kauf-bulb-abc123/on \
+  -H "Content-Type: application/json" \
+  -d '{"transition": 2000}'
 
 # Refresh device discovery
-curl http://localhost:3001/api/refresh
+curl -X POST http://localhost:3001/api/refresh
 
 # Get bulb state
 curl http://localhost:3001/api/bulb/kauf-bulb-abc123/state
@@ -412,19 +460,19 @@ curl http://localhost:3001/api/bulb/kauf-bulb-abc123/info
 curl -X POST http://localhost:3001/api/bulb/kauf-bulb-abc123/test
 
 # Set brightness to 50% with orange color
-curl -X POST http://localhost:3001/api/bulb/kauf-bulb-abc123/control \
+curl -X POST http://localhost:3001/api/bulb/kauf-bulb-abc123/set \
   -H "Content-Type: application/json" \
-  -d '{"state": "on", "brightness": 50, "r": 255, "g": 128, "b": 0}'
+  -d '{"on": true, "brightness": 50, "r": 255, "g": 128, "b": 0}'
 
 # Set color to blue with 1 second transition
-curl -X POST http://localhost:3001/api/bulb/kauf-bulb-abc123/control \
+curl -X POST http://localhost:3001/api/bulb/kauf-bulb-abc123/set \
   -H "Content-Type: application/json" \
   -d '{"brightness": 100, "r": 0, "g": 0, "b": 255, "transition": 1000}'
 
 # Turn off with slow fade (3 seconds)
-curl -X POST http://localhost:3001/api/bulb/kauf-bulb-abc123/control \
+curl -X POST http://localhost:3001/api/bulb/kauf-bulb-abc123/set \
   -H "Content-Type: application/json" \
-  -d '{"state": "off", "transition": 3000}'
+  -d '{"on": false, "transition": 3000}'
 
 # Update bulb friendly name
 curl -X POST http://localhost:3001/api/bulb/kauf-bulb-abc123/name \
@@ -439,10 +487,10 @@ curl -X POST http://localhost:3001/api/bulb/kauf-bulb-abc123/push \
 # Pop and restore state from stack
 curl -X POST http://localhost:3001/api/bulb/kauf-bulb-abc123/pop
 
-# Push current state and set new color (combined push + control)
+# Push current state and set new color (combined push + set)
 curl -X POST http://localhost:3001/api/bulb/kauf-bulb-abc123/push-set \
   -H "Content-Type: application/json" \
-  -d '{"state": "on", "brightness": 100, "r": 255, "g": 0, "b": 0, "transition": 500}'
+  -d '{"on": true, "brightness": 100, "r": 255, "g": 0, "b": 0, "transition": 500}'
 ```
 
 ## Configuration
@@ -496,6 +544,7 @@ kauf-bulb/
 │   ├── discovery.js       # mDNS device discovery
 │   ├── bulbController.js  # ESPHome API interactions
 │   ├── bulbStore.js       # In-memory store + persistence
+│   ├── bulbStateStack.js  # Push/pop state stack
 │   └── routes/
 │       └── api.js         # REST API routes
 ├── src/

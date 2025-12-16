@@ -11,7 +11,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close']);
 
-const { controlBulb, updateName, getBulbState, getDeviceInfo } = useBulbs();
+const { setBulb, updateName, getBulbState, getDeviceInfo } = useBulbs();
 
 const editName = ref(props.bulb.name);
 const brightness = ref(props.bulb.brightness ?? 100);
@@ -103,8 +103,8 @@ async function fetchDeviceInfo() {
 async function handleTurnOn() {
   isLoading.value = true;
   try {
-    await controlBulb(props.bulb.id, {
-      state: 'on',
+    await setBulb(props.bulb.id, {
+      on: true,
       brightness: brightness.value,
       r: colorR.value,
       g: colorG.value,
@@ -120,8 +120,8 @@ async function handleTurnOn() {
 async function handleTurnOff() {
   isLoading.value = true;
   try {
-    await controlBulb(props.bulb.id, {
-      state: 'off',
+    await setBulb(props.bulb.id, {
+      on: false,
       transition: transition.value
     });
     await fetchState();
@@ -133,7 +133,7 @@ async function handleTurnOff() {
 async function handleApply() {
   isLoading.value = true;
   try {
-    await controlBulb(props.bulb.id, {
+    await setBulb(props.bulb.id, {
       brightness: brightness.value,
       r: colorR.value,
       g: colorG.value,

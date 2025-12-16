@@ -70,7 +70,7 @@ test.describe('Bulb Controls', () => {
     if (isDisabled === null) {
       // Click and verify API call (could be on or off)
       const responsePromise = page.waitForResponse(response =>
-        (response.url().includes('/api/on') || response.url().includes('/api/off')) && response.status() === 200
+        (response.url().includes('/api/bulb/') && (response.url().includes('/on') || response.url().includes('/off'))) && response.status() === 200
       );
 
       await powerButton.click();
@@ -81,7 +81,7 @@ test.describe('Bulb Controls', () => {
 
   test('should turn on all bulbs', async ({ page }) => {
     const responsePromise = page.waitForResponse(response =>
-      response.url().includes('/api/on') && !response.url().includes('device=') && response.status() === 200
+      response.url().includes('/api/bulbs/on') && response.status() === 200
     );
 
     await page.getByRole('button', { name: 'Turn All On' }).click();
@@ -91,7 +91,7 @@ test.describe('Bulb Controls', () => {
 
   test('should turn off all bulbs', async ({ page }) => {
     const responsePromise = page.waitForResponse(response =>
-      response.url().includes('/api/off') && !response.url().includes('device=') && response.status() === 200
+      response.url().includes('/api/bulbs/off') && response.status() === 200
     );
 
     await page.getByRole('button', { name: 'Turn All Off' }).click();
@@ -340,7 +340,7 @@ test.describe('Bulb Modal', () => {
       await brightnessSlider.evaluate(el => { el.value = '75'; el.dispatchEvent(new Event('input', { bubbles: true })); });
 
       const responsePromise = page.waitForResponse(response =>
-        response.url().includes('/control') && response.status() === 200
+        response.url().includes('/set') && response.status() === 200
       );
 
       await page.locator('.modal').getByRole('button', { name: 'Apply Settings' }).click();
@@ -353,7 +353,7 @@ test.describe('Bulb Modal', () => {
 test.describe('Error Handling', () => {
   test('should display error toast on API failure', async ({ page }) => {
     // Mock a failed API response
-    await page.route('**/api/on**', route => {
+    await page.route('**/api/bulbs/on', route => {
       route.fulfill({
         status: 500,
         body: JSON.stringify({ error: 'Internal Server Error' })
@@ -373,7 +373,7 @@ test.describe('Error Handling', () => {
   });
 
   test('should dismiss error toast when clicked', async ({ page }) => {
-    await page.route('**/api/on**', route => {
+    await page.route('**/api/bulbs/on', route => {
       route.fulfill({
         status: 500,
         body: JSON.stringify({ error: 'Test Error' })

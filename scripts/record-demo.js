@@ -109,20 +109,20 @@ async function setupInitialState() {
 
   // Set first bulb: ON, white, 50% brightness
   if (bulbs[0]) {
-    await fetch(`${BASE_URL}/api/bulb/${bulbs[0].id}/control`, {
+    await fetch(`${BASE_URL}/api/bulb/${bulbs[0].id}/set`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ state: 'on', brightness: 50, r: 255, g: 255, b: 255, transition: 500 })
+      body: JSON.stringify({ on: true, brightness: 50, r: 255, g: 255, b: 255, transition: 500 })
     });
     console.log(`  ${bulbs[0].id}: ON, white, 50%`);
   }
 
   // Set second bulb: ON, white, 50% brightness
   if (bulbs[1]) {
-    await fetch(`${BASE_URL}/api/bulb/${bulbs[1].id}/control`, {
+    await fetch(`${BASE_URL}/api/bulb/${bulbs[1].id}/set`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ state: 'on', brightness: 50, r: 255, g: 255, b: 255, transition: 500 })
+      body: JSON.stringify({ on: true, brightness: 50, r: 255, g: 255, b: 255, transition: 500 })
     });
     console.log(`  ${bulbs[1].id}: ON, white, 50%`);
   }

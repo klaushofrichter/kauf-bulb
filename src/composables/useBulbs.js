@@ -24,15 +24,26 @@ export function useBulbs() {
     }
   }
 
-  async function turnOn(deviceId = null, options = {}) {
+  async function turnOn(bulbId = null, options = {}) {
     error.value = null;
     try {
-      const params = new URLSearchParams();
-      if (deviceId) params.set('device', deviceId);
-      if (options.transition !== undefined) params.set('transition', options.transition);
+      let url;
+      const body = {};
+      if (options.transition !== undefined) body.transition = options.transition;
 
-      const url = `/api/on${params.toString() ? '?' + params.toString() : ''}`;
-      const response = await fetch(url);
+      if (bulbId) {
+        // Single bulb: POST /api/bulb/:id/on
+        url = `/api/bulb/${bulbId}/on`;
+      } else {
+        // All bulbs: POST /api/bulbs/on
+        url = '/api/bulbs/on';
+      }
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
 
       if (!response.ok) {
         const data = await response.json();
@@ -48,15 +59,26 @@ export function useBulbs() {
     }
   }
 
-  async function turnOff(deviceId = null, options = {}) {
+  async function turnOff(bulbId = null, options = {}) {
     error.value = null;
     try {
-      const params = new URLSearchParams();
-      if (deviceId) params.set('device', deviceId);
-      if (options.transition !== undefined) params.set('transition', options.transition);
+      let url;
+      const body = {};
+      if (options.transition !== undefined) body.transition = options.transition;
 
-      const url = `/api/off${params.toString() ? '?' + params.toString() : ''}`;
-      const response = await fetch(url);
+      if (bulbId) {
+        // Single bulb: POST /api/bulb/:id/off
+        url = `/api/bulb/${bulbId}/off`;
+      } else {
+        // All bulbs: POST /api/bulbs/off
+        url = '/api/bulbs/off';
+      }
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
 
       if (!response.ok) {
         const data = await response.json();
@@ -72,10 +94,10 @@ export function useBulbs() {
     }
   }
 
-  async function controlBulb(deviceId, options = {}) {
+  async function setBulb(bulbId, options = {}) {
     error.value = null;
     try {
-      const response = await fetch(`/api/bulb/${deviceId}/control`, {
+      const response = await fetch(`/api/bulb/${bulbId}/set`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(options)
@@ -89,16 +111,16 @@ export function useBulbs() {
       await fetchBulbs();
       return await response.json();
     } catch (err) {
-      error.value = `Failed to control bulb: ${err.message}`;
-      console.error('controlBulb error:', err);
+      error.value = `Failed to set bulb: ${err.message}`;
+      console.error('setBulb error:', err);
       throw err;
     }
   }
 
-  async function updateName(deviceId, name) {
+  async function updateName(bulbId, name) {
     error.value = null;
     try {
-      const response = await fetch(`/api/bulb/${deviceId}/name`, {
+      const response = await fetch(`/api/bulb/${bulbId}/name`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name })
@@ -129,7 +151,7 @@ export function useBulbs() {
       }
 
       const data = await response.json();
-      // API now returns bulb list directly after ~5 second discovery window
+      // API returns bulb list directly after ~5 second discovery window
       bulbs.value = data.bulbs || [];
       return data;
     } catch (err) {
@@ -141,9 +163,9 @@ export function useBulbs() {
     }
   }
 
-  async function getBulbState(deviceId) {
+  async function getBulbState(bulbId) {
     try {
-      const response = await fetch(`/api/bulb/${deviceId}/state`);
+      const response = await fetch(`/api/bulb/${bulbId}/state`);
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || `HTTP ${response.status}`);
@@ -155,9 +177,9 @@ export function useBulbs() {
     }
   }
 
-  async function getDeviceInfo(deviceId) {
+  async function getDeviceInfo(bulbId) {
     try {
-      const response = await fetch(`/api/bulb/${deviceId}/info`);
+      const response = await fetch(`/api/bulb/${bulbId}/info`);
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || `HTTP ${response.status}`);
@@ -169,9 +191,9 @@ export function useBulbs() {
     }
   }
 
-  async function testBulb(deviceId) {
+  async function testBulb(bulbId) {
     try {
-      const response = await fetch(`/api/bulb/${deviceId}/test`, {
+      const response = await fetch(`/api/bulb/${bulbId}/test`, {
         method: 'POST'
       });
       if (!response.ok) {
@@ -185,9 +207,9 @@ export function useBulbs() {
     }
   }
 
-  async function pushState(deviceId, options = {}) {
+  async function pushState(bulbId, options = {}) {
     try {
-      const response = await fetch(`/api/bulb/${deviceId}/push`, {
+      const response = await fetch(`/api/bulb/${bulbId}/push`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(options)
@@ -203,9 +225,9 @@ export function useBulbs() {
     }
   }
 
-  async function popState(deviceId) {
+  async function popState(bulbId) {
     try {
-      const response = await fetch(`/api/bulb/${deviceId}/pop`, {
+      const response = await fetch(`/api/bulb/${bulbId}/pop`, {
         method: 'POST'
       });
       if (!response.ok) {
@@ -230,7 +252,7 @@ export function useBulbs() {
     fetchBulbs,
     turnOn,
     turnOff,
-    controlBulb,
+    setBulb,
     updateName,
     refreshDiscovery,
     getBulbState,

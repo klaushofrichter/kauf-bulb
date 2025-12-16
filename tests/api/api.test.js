@@ -39,11 +39,12 @@ describe('REST API Endpoints', () => {
   });
 
   describe('GET /api/list', () => {
-    it('should return all bulbs', async () => {
+    it('should return all bulbs with success flag', async () => {
       const response = await request(app)
         .get('/api/list')
         .expect(200);
 
+      expect(response.body.success).toBe(true);
       expect(response.body).toHaveProperty('bulbs');
       expect(response.body.bulbs).toHaveLength(3);
     });
@@ -67,88 +68,127 @@ describe('REST API Endpoints', () => {
         .get('/api/list')
         .expect(200);
 
+      expect(response.body.success).toBe(true);
       expect(response.body.bulbs).toHaveLength(0);
     });
   });
 
-  describe('GET /api/on', () => {
+  describe('POST /api/bulbs/on', () => {
     it('should turn on all online bulbs', async () => {
       const response = await request(app)
-        .get('/api/on')
+        .post('/api/bulbs/on')
         .expect(200);
 
+      expect(response.body.success).toBe(true);
       expect(response.body).toHaveProperty('results');
       // Should only turn on online bulbs (2 out of 3)
       expect(response.body.results).toHaveLength(2);
     });
 
-    it('should turn on a specific bulb by device ID', async () => {
+    it('should return id in results', async () => {
       const response = await request(app)
-        .get('/api/on?device=kauf-bulb-test1')
+        .post('/api/bulbs/on')
         .expect(200);
 
-      expect(response.body.device).toBe('kauf-bulb-test1');
-      expect(response.body.success).toBe(true);
+      expect(response.body.results[0]).toHaveProperty('id');
+      expect(response.body.results[0]).toHaveProperty('success');
     });
 
-    it('should return 404 for non-existent device', async () => {
+    it('should accept transition in body', async () => {
       const response = await request(app)
-        .get('/api/on?device=non-existent')
-        .expect(404);
-
-      expect(response.body.error).toBe('Device not found');
-    });
-
-    it('should return 503 for offline device', async () => {
-      const response = await request(app)
-        .get('/api/on?device=kauf-bulb-offline')
-        .expect(503);
-
-      expect(response.body.error).toBe('Device is offline');
-    });
-
-    it('should accept transition parameter', async () => {
-      const response = await request(app)
-        .get('/api/on?device=kauf-bulb-test1&transition=2000')
+        .post('/api/bulbs/on')
+        .send({ transition: 2000 })
         .expect(200);
 
       expect(response.body.success).toBe(true);
     });
   });
 
-  describe('GET /api/off', () => {
-    it('should turn off all online bulbs', async () => {
+  describe('POST /api/bulb/:id/on', () => {
+    it('should turn on a specific bulb', async () => {
       const response = await request(app)
-        .get('/api/off')
+        .post('/api/bulb/kauf-bulb-test1/on')
         .expect(200);
 
+      expect(response.body.id).toBe('kauf-bulb-test1');
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should return 404 for non-existent bulb', async () => {
+      const response = await request(app)
+        .post('/api/bulb/non-existent/on')
+        .expect(404);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Bulb not found');
+    });
+
+    it('should return 503 for offline bulb', async () => {
+      const response = await request(app)
+        .post('/api/bulb/kauf-bulb-offline/on')
+        .expect(503);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Bulb is offline');
+    });
+
+    it('should accept transition parameter', async () => {
+      const response = await request(app)
+        .post('/api/bulb/kauf-bulb-test1/on')
+        .send({ transition: 2000 })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+    });
+  });
+
+  describe('POST /api/bulbs/off', () => {
+    it('should turn off all online bulbs', async () => {
+      const response = await request(app)
+        .post('/api/bulbs/off')
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
       expect(response.body).toHaveProperty('results');
       expect(response.body.results).toHaveLength(2);
     });
 
-    it('should turn off a specific bulb by device ID', async () => {
+    it('should return id in results', async () => {
       const response = await request(app)
-        .get('/api/off?device=kauf-bulb-test1')
+        .post('/api/bulbs/off')
         .expect(200);
 
-      expect(response.body.device).toBe('kauf-bulb-test1');
+      expect(response.body.results[0]).toHaveProperty('id');
+      expect(response.body.results[0]).toHaveProperty('success');
+    });
+  });
+
+  describe('POST /api/bulb/:id/off', () => {
+    it('should turn off a specific bulb', async () => {
+      const response = await request(app)
+        .post('/api/bulb/kauf-bulb-test1/off')
+        .expect(200);
+
+      expect(response.body.id).toBe('kauf-bulb-test1');
       expect(response.body.success).toBe(true);
     });
 
-    it('should return 404 for non-existent device', async () => {
+    it('should return 404 for non-existent bulb', async () => {
       const response = await request(app)
-        .get('/api/off?device=non-existent')
+        .post('/api/bulb/non-existent/off')
         .expect(404);
 
-      expect(response.body.error).toBe('Device not found');
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Bulb not found');
     });
 
-    it('should return 503 for offline device', async () => {
+    it('should return 503 for offline bulb', async () => {
       const response = await request(app)
-        .get('/api/off?device=kauf-bulb-offline')
+        .post('/api/bulb/kauf-bulb-offline/off')
         .expect(503);
 
-      expect(response.body.error).toBe('Device is offline');
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Bulb is offline');
     });
   });
 
@@ -158,20 +198,11 @@ describe('REST API Endpoints', () => {
         .post('/api/refresh')
         .expect(200);
 
+      expect(response.body.success).toBe(true);
       expect(response.body.message).toBe('Discovery completed');
       expect(response.body).toHaveProperty('bulbs');
-      expect(response.body).toHaveProperty('devicesFound');
+      expect(response.body).toHaveProperty('bulbsFound');
       expect(response.body).toHaveProperty('duration');
-    });
-  });
-
-  describe('GET /api/refresh', () => {
-    it('should trigger discovery refresh via GET', async () => {
-      const response = await request(app)
-        .get('/api/refresh')
-        .expect(200);
-
-      expect(response.body.message).toBe('Discovery completed');
     });
   });
 
@@ -181,73 +212,86 @@ describe('REST API Endpoints', () => {
         .get('/api/bulb/kauf-bulb-test1/state')
         .expect(200);
 
-      expect(response.body.device).toBe('kauf-bulb-test1');
+      expect(response.body.id).toBe('kauf-bulb-test1');
       expect(response.body.success).toBe(true);
       expect(response.body.state).toBeDefined();
     });
 
-    it('should return 404 for non-existent device', async () => {
+    it('should return 404 for non-existent bulb', async () => {
       const response = await request(app)
         .get('/api/bulb/non-existent/state')
         .expect(404);
 
-      expect(response.body.error).toBe('Device not found');
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Bulb not found');
     });
 
-    it('should return 503 for offline device', async () => {
+    it('should return 503 for offline bulb', async () => {
       const response = await request(app)
         .get('/api/bulb/kauf-bulb-offline/state')
         .expect(503);
 
-      expect(response.body.error).toBe('Device is offline');
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Bulb is offline');
     });
   });
 
-  describe('POST /api/bulb/:id/control', () => {
-    it('should control bulb with brightness', async () => {
+  describe('POST /api/bulb/:id/set', () => {
+    it('should set bulb with brightness', async () => {
       const response = await request(app)
-        .post('/api/bulb/kauf-bulb-test1/control')
+        .post('/api/bulb/kauf-bulb-test1/set')
         .send({ brightness: 50 })
         .expect(200);
 
-      expect(response.body.device).toBe('kauf-bulb-test1');
+      expect(response.body.id).toBe('kauf-bulb-test1');
       expect(response.body.success).toBe(true);
     });
 
-    it('should control bulb with color', async () => {
+    it('should set bulb with color', async () => {
       const response = await request(app)
-        .post('/api/bulb/kauf-bulb-test1/control')
+        .post('/api/bulb/kauf-bulb-test1/set')
         .send({ r: 255, g: 128, b: 0 })
         .expect(200);
 
       expect(response.body.success).toBe(true);
     });
 
-    it('should control bulb with state and transition', async () => {
+    it('should set bulb with on:true and transition', async () => {
       const response = await request(app)
-        .post('/api/bulb/kauf-bulb-test1/control')
-        .send({ state: 'on', brightness: 75, transition: 500 })
+        .post('/api/bulb/kauf-bulb-test1/set')
+        .send({ on: true, brightness: 75, transition: 500 })
         .expect(200);
 
       expect(response.body.success).toBe(true);
     });
 
-    it('should return 404 for non-existent device', async () => {
+    it('should set bulb with on:false', async () => {
       const response = await request(app)
-        .post('/api/bulb/non-existent/control')
-        .send({ state: 'on' })
-        .expect(404);
+        .post('/api/bulb/kauf-bulb-test1/set')
+        .send({ on: false, transition: 500 })
+        .expect(200);
 
-      expect(response.body.error).toBe('Device not found');
+      expect(response.body.success).toBe(true);
     });
 
-    it('should return 503 for offline device', async () => {
+    it('should return 404 for non-existent bulb', async () => {
       const response = await request(app)
-        .post('/api/bulb/kauf-bulb-offline/control')
-        .send({ state: 'on' })
+        .post('/api/bulb/non-existent/set')
+        .send({ on: true })
+        .expect(404);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Bulb not found');
+    });
+
+    it('should return 503 for offline bulb', async () => {
+      const response = await request(app)
+        .post('/api/bulb/kauf-bulb-offline/set')
+        .send({ on: true })
         .expect(503);
 
-      expect(response.body.error).toBe('Device is offline');
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Bulb is offline');
     });
   });
 
@@ -258,7 +302,8 @@ describe('REST API Endpoints', () => {
         .send({ name: 'New Name' })
         .expect(200);
 
-      expect(response.body.device).toBe('kauf-bulb-test1');
+      expect(response.body.success).toBe(true);
+      expect(response.body.id).toBe('kauf-bulb-test1');
       expect(response.body.name).toBe('New Name');
 
       // Verify the name was updated in the store
@@ -281,6 +326,7 @@ describe('REST API Endpoints', () => {
         .send({})
         .expect(400);
 
+      expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Name is required');
     });
 
@@ -290,16 +336,18 @@ describe('REST API Endpoints', () => {
         .send({ name: '' })
         .expect(400);
 
+      expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Name is required');
     });
 
-    it('should return 404 for non-existent device', async () => {
+    it('should return 404 for non-existent bulb', async () => {
       const response = await request(app)
         .post('/api/bulb/non-existent/name')
         .send({ name: 'New Name' })
         .expect(404);
 
-      expect(response.body.error).toBe('Device not found');
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Bulb not found');
     });
   });
 
@@ -310,7 +358,7 @@ describe('REST API Endpoints', () => {
         .send({ transition: 500 })
         .expect(200);
 
-      expect(response.body.device).toBe('kauf-bulb-test1');
+      expect(response.body.id).toBe('kauf-bulb-test1');
       expect(response.body.success).toBe(true);
       expect(response.body.message).toBe('State pushed to stack');
       expect(response.body.stackSize).toBe(1);
@@ -350,22 +398,24 @@ describe('REST API Endpoints', () => {
       expect(response.body.stackSize).toBe(1); // Separate stack for test2
     });
 
-    it('should return 404 for non-existent device', async () => {
+    it('should return 404 for non-existent bulb', async () => {
       const response = await request(app)
         .post('/api/bulb/non-existent/push')
         .send({})
         .expect(404);
 
-      expect(response.body.error).toBe('Device not found');
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Bulb not found');
     });
 
-    it('should return 503 for offline device', async () => {
+    it('should return 503 for offline bulb', async () => {
       const response = await request(app)
         .post('/api/bulb/kauf-bulb-offline/push')
         .send({})
         .expect(503);
 
-      expect(response.body.error).toBe('Device is offline');
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Bulb is offline');
     });
   });
 
@@ -382,7 +432,7 @@ describe('REST API Endpoints', () => {
         .post('/api/bulb/kauf-bulb-test1/pop')
         .expect(200);
 
-      expect(response.body.device).toBe('kauf-bulb-test1');
+      expect(response.body.id).toBe('kauf-bulb-test1');
       expect(response.body.success).toBe(true);
       expect(response.body.message).toBe('State restored from stack');
       expect(response.body.stackSize).toBe(0);
@@ -395,7 +445,7 @@ describe('REST API Endpoints', () => {
         .post('/api/bulb/kauf-bulb-test1/pop')
         .expect(200);
 
-      expect(response.body.device).toBe('kauf-bulb-test1');
+      expect(response.body.id).toBe('kauf-bulb-test1');
       expect(response.body.success).toBe(true);
       expect(response.body.message).toBe('Stack is empty, no change made');
       expect(response.body.stackSize).toBe(0);
@@ -429,20 +479,22 @@ describe('REST API Endpoints', () => {
       expect(response2.body.state.transition).toBe(100);
     });
 
-    it('should return 404 for non-existent device', async () => {
+    it('should return 404 for non-existent bulb', async () => {
       const response = await request(app)
         .post('/api/bulb/non-existent/pop')
         .expect(404);
 
-      expect(response.body.error).toBe('Device not found');
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Bulb not found');
     });
 
-    it('should return 503 for offline device', async () => {
+    it('should return 503 for offline bulb', async () => {
       const response = await request(app)
         .post('/api/bulb/kauf-bulb-offline/pop')
         .expect(503);
 
-      expect(response.body.error).toBe('Device is offline');
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Bulb is offline');
     });
   });
 
@@ -450,15 +502,15 @@ describe('REST API Endpoints', () => {
     it('should push current state and apply new settings', async () => {
       const response = await request(app)
         .post('/api/bulb/kauf-bulb-test1/push-set')
-        .send({ state: 'on', brightness: 80, r: 255, g: 128, b: 0, transition: 500 })
+        .send({ on: true, brightness: 80, r: 255, g: 128, b: 0, transition: 500 })
         .expect(200);
 
-      expect(response.body.device).toBe('kauf-bulb-test1');
+      expect(response.body.id).toBe('kauf-bulb-test1');
       expect(response.body.success).toBe(true);
       expect(response.body.message).toBe('State pushed and new settings applied');
       expect(response.body.stackSize).toBe(1);
       expect(response.body.previousState).toBeDefined();
-      expect(response.body.controlResult).toBeDefined();
+      expect(response.body.setResult).toBeDefined();
     });
 
     it('should increment stack size on multiple push-set calls', async () => {
@@ -479,7 +531,7 @@ describe('REST API Endpoints', () => {
       // Push and set new state
       await request(app)
         .post('/api/bulb/kauf-bulb-test1/push-set')
-        .send({ state: 'on', brightness: 100, r: 0, g: 255, b: 0 })
+        .send({ on: true, brightness: 100, r: 0, g: 255, b: 0 })
         .expect(200);
 
       // Pop should restore
@@ -491,22 +543,24 @@ describe('REST API Endpoints', () => {
       expect(popResponse.body.stackSize).toBe(0);
     });
 
-    it('should return 404 for non-existent device', async () => {
+    it('should return 404 for non-existent bulb', async () => {
       const response = await request(app)
         .post('/api/bulb/non-existent/push-set')
         .send({ brightness: 50 })
         .expect(404);
 
-      expect(response.body.error).toBe('Device not found');
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Bulb not found');
     });
 
-    it('should return 503 for offline device', async () => {
+    it('should return 503 for offline bulb', async () => {
       const response = await request(app)
         .post('/api/bulb/kauf-bulb-offline/push-set')
         .send({ brightness: 50 })
         .expect(503);
 
-      expect(response.body.error).toBe('Device is offline');
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Bulb is offline');
     });
   });
 });

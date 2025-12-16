@@ -62,7 +62,7 @@ describe('Kauf Bulb Integration Tests', () => {
         console.log(`Testing turn ON for ${bulb.id}...`);
 
         // Turn on the bulb
-        const onResponse = await apiGet(`/api/on?device=${bulb.id}`);
+        const onResponse = await apiPost(`/api/bulb/${bulb.id}/on`, {});
         expect(onResponse.status).toBe(200);
         expect(onResponse.body.success).toBe(true);
 
@@ -89,7 +89,7 @@ describe('Kauf Bulb Integration Tests', () => {
         console.log(`Testing turn OFF for ${bulb.id}...`);
 
         // Turn off the bulb
-        const offResponse = await apiGet(`/api/off?device=${bulb.id}`);
+        const offResponse = await apiPost(`/api/bulb/${bulb.id}/off`, {});
         expect(offResponse.status).toBe(200);
         expect(offResponse.body.success).toBe(true);
 
@@ -116,7 +116,7 @@ describe('Kauf Bulb Integration Tests', () => {
         console.log(`Testing full cycle for ${bulb.id}...`);
 
         // Step 1: Turn ON
-        const onResponse = await apiGet(`/api/on?device=${bulb.id}`);
+        const onResponse = await apiPost(`/api/bulb/${bulb.id}/on`, {});
         expect(onResponse.status).toBe(200);
         expect(onResponse.body.success).toBe(true);
 
@@ -127,7 +127,7 @@ describe('Kauf Bulb Integration Tests', () => {
         expect(stateOn.body.state.on).toBe(true);
 
         // Step 3: Turn OFF
-        const offResponse = await apiGet(`/api/off?device=${bulb.id}`);
+        const offResponse = await apiPost(`/api/bulb/${bulb.id}/off`, {});
         expect(offResponse.status).toBe(200);
         expect(offResponse.body.success).toBe(true);
 
@@ -153,12 +153,12 @@ describe('Kauf Bulb Integration Tests', () => {
         console.log(`Testing brightness for ${bulb.id}...`);
 
         // Turn on with specific brightness
-        const controlResponse = await apiPost(`/api/bulb/${bulb.id}/control`, {
-          state: 'on',
+        const setResponse = await apiPost(`/api/bulb/${bulb.id}/set`, {
+          on: true,
           brightness: 50
         });
-        expect(controlResponse.status).toBe(200);
-        expect(controlResponse.body.success).toBe(true);
+        expect(setResponse.status).toBe(200);
+        expect(setResponse.body.success).toBe(true);
 
         await new Promise(resolve => setTimeout(resolve, 1500));
 
@@ -185,13 +185,13 @@ describe('Kauf Bulb Integration Tests', () => {
         console.log(`Testing brightness control for ${bulb.id}...`);
 
         // Set brightness to 100%
-        const controlResponse = await apiPost(`/api/bulb/${bulb.id}/control`, {
-          state: 'on',
+        const setResponse = await apiPost(`/api/bulb/${bulb.id}/set`, {
+          on: true,
           brightness: 100
         });
 
-        expect(controlResponse.status).toBe(200);
-        expect(controlResponse.body.success).toBe(true);
+        expect(setResponse.status).toBe(200);
+        expect(setResponse.body.success).toBe(true);
 
         await new Promise(resolve => setTimeout(resolve, 1500));
 
@@ -213,13 +213,15 @@ describe('Kauf Bulb Integration Tests', () => {
         return;
       }
 
-      const response = await apiGet('/api/on');
+      const response = await apiPost('/api/bulbs/on', {});
       expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
       expect(response.body.results).toBeDefined();
       expect(response.body.results.length).toBe(onlineBulbs.length);
 
       for (const result of response.body.results) {
         expect(result.success).toBe(true);
+        expect(result.id).toBeDefined();
       }
     });
 
@@ -229,13 +231,15 @@ describe('Kauf Bulb Integration Tests', () => {
         return;
       }
 
-      const response = await apiGet('/api/off');
+      const response = await apiPost('/api/bulbs/off', {});
       expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
       expect(response.body.results).toBeDefined();
       expect(response.body.results.length).toBe(onlineBulbs.length);
 
       for (const result of response.body.results) {
         expect(result.success).toBe(true);
+        expect(result.id).toBeDefined();
       }
     });
   });
@@ -251,13 +255,13 @@ describe('Kauf Bulb Integration Tests', () => {
       console.log(`Testing transition time for ${testBulbId}...`);
 
       // Turn off first
-      await apiGet(`/api/off?device=${testBulbId}&transition=100`);
+      await apiPost(`/api/bulb/${testBulbId}/off`, { transition: 100 });
 
       await new Promise(resolve => setTimeout(resolve, 500));
 
       // Turn on with 2 second transition
       const startTime = Date.now();
-      const response = await apiGet(`/api/on?device=${testBulbId}&transition=2000`);
+      const response = await apiPost(`/api/bulb/${testBulbId}/on`, { transition: 2000 });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -284,7 +288,7 @@ describe('Kauf Bulb Integration Tests', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.message).toBe('Test completed');
-      expect(response.body.device).toBe(testBulbId);
+      expect(response.body.id).toBe(testBulbId);
 
       console.log(`  ✓ ${testBulbId} test cycle completed`);
     });
@@ -292,7 +296,7 @@ describe('Kauf Bulb Integration Tests', () => {
     it('should return 404 for non-existent bulb', async () => {
       const response = await apiPost('/api/bulb/non-existent-bulb/test', {});
       expect(response.status).toBe(404);
-      expect(response.body.error).toBe('Device not found');
+      expect(response.body.error).toBe('Bulb not found');
     });
 
     it('should return 503 for offline bulb', async () => {
@@ -310,7 +314,7 @@ describe('Kauf Bulb Integration Tests', () => {
 
       const response = await apiPost(`/api/bulb/${offlineBulbId}/test`, {});
       expect(response.status).toBe(503);
-      expect(response.body.error).toBe('Device is offline');
+      expect(response.body.error).toBe('Bulb is offline');
 
       console.log(`  ✓ Offline bulb correctly rejected`);
     });
@@ -348,8 +352,8 @@ describe('Kauf Bulb Integration Tests', () => {
       console.log(`Testing push/pop cycle for ${testBulbId}...`);
 
       // Set bulb to a known state (on, orange, 80%)
-      await apiPost(`/api/bulb/${testBulbId}/control`, {
-        state: 'on',
+      await apiPost(`/api/bulb/${testBulbId}/set`, {
+        on: true,
         brightness: 80,
         r: 255,
         g: 128,
@@ -363,8 +367,8 @@ describe('Kauf Bulb Integration Tests', () => {
       console.log(`  - Pushed state: on=${pushResponse.body.state.on}, brightness=${pushResponse.body.state.brightness}`);
 
       // Change the bulb to a different state (blue, 50%)
-      await apiPost(`/api/bulb/${testBulbId}/control`, {
-        state: 'on',
+      await apiPost(`/api/bulb/${testBulbId}/set`, {
+        on: true,
         brightness: 50,
         r: 0,
         g: 0,
@@ -425,13 +429,13 @@ describe('Kauf Bulb Integration Tests', () => {
     it('should return 404 for non-existent bulb on push', async () => {
       const response = await apiPost('/api/bulb/non-existent-bulb/push', {});
       expect(response.status).toBe(404);
-      expect(response.body.error).toBe('Device not found');
+      expect(response.body.error).toBe('Bulb not found');
     });
 
     it('should return 404 for non-existent bulb on pop', async () => {
       const response = await apiPost('/api/bulb/non-existent-bulb/pop', {});
       expect(response.status).toBe(404);
-      expect(response.body.error).toBe('Device not found');
+      expect(response.body.error).toBe('Bulb not found');
     });
   });
 
@@ -447,7 +451,7 @@ describe('Kauf Bulb Integration Tests', () => {
 
       // Push current state and set to red
       const response = await apiPost(`/api/bulb/${testBulbId}/push-set`, {
-        state: 'on',
+        on: true,
         brightness: 100,
         r: 255,
         g: 0,
@@ -481,8 +485,8 @@ describe('Kauf Bulb Integration Tests', () => {
       console.log(`Testing push-set + pop for ${testBulbId}...`);
 
       // Set to a known state first (white, 60%)
-      await apiPost(`/api/bulb/${testBulbId}/control`, {
-        state: 'on',
+      await apiPost(`/api/bulb/${testBulbId}/set`, {
+        on: true,
         brightness: 60,
         r: 255,
         g: 255,
@@ -492,7 +496,7 @@ describe('Kauf Bulb Integration Tests', () => {
 
       // Push and set to blue
       const pushSetResponse = await apiPost(`/api/bulb/${testBulbId}/push-set`, {
-        state: 'on',
+        on: true,
         brightness: 100,
         r: 0,
         g: 0,
@@ -526,7 +530,7 @@ describe('Kauf Bulb Integration Tests', () => {
         brightness: 50
       });
       expect(response.status).toBe(404);
-      expect(response.body.error).toBe('Device not found');
+      expect(response.body.error).toBe('Bulb not found');
     });
   });
 });

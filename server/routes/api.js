@@ -23,109 +23,80 @@ router.get('/list', async (req, res) => {
     })
   );
 
-  res.json({ bulbs: bulbsWithState });
+  res.json({ success: true, bulbs: bulbsWithState });
 });
 
-// Turn on all bulbs or specific bulb
-router.get('/on', async (req, res) => {
-  const deviceId = req.query.device;
-  const transition = req.query.transition ? parseInt(req.query.transition, 10) : undefined;
+// Turn on all bulbs
+router.post('/bulbs/on', async (req, res) => {
+  const transition = req.body.transition ?? req.query.transition;
+  const transitionValue = transition ? parseInt(transition, 10) : undefined;
 
-  if (deviceId) {
-    const bulb = bulbStore.getBulb(deviceId);
-    if (!bulb) {
-      return res.status(404).json({ error: 'Device not found' });
-    }
-    if (!bulb.online || !bulb.lastIp) {
-      return res.status(503).json({ error: 'Device is offline' });
-    }
-
-    const result = await bulbController.turnOn(bulb.lastIp, { transition });
-    return res.json({ device: deviceId, ...result });
-  }
-
-  // Turn on all online bulbs
   const onlineBulbs = bulbStore.getOnlineBulbs();
   const results = await Promise.all(
     onlineBulbs.map(async (bulb) => {
-      const result = await bulbController.turnOn(bulb.lastIp, { transition });
-      return { device: bulb.id, ...result };
+      const result = await bulbController.turnOn(bulb.lastIp, { transition: transitionValue });
+      return { id: bulb.id, ...result };
     })
   );
 
-  res.json({ results });
+  res.json({ success: true, results });
 });
 
-// Turn off all bulbs or specific bulb
-router.get('/off', async (req, res) => {
-  const deviceId = req.query.device;
-  const transition = req.query.transition ? parseInt(req.query.transition, 10) : undefined;
+// Turn off all bulbs
+router.post('/bulbs/off', async (req, res) => {
+  const transition = req.body.transition ?? req.query.transition;
+  const transitionValue = transition ? parseInt(transition, 10) : undefined;
 
-  if (deviceId) {
-    const bulb = bulbStore.getBulb(deviceId);
-    if (!bulb) {
-      return res.status(404).json({ error: 'Device not found' });
-    }
-    if (!bulb.online || !bulb.lastIp) {
-      return res.status(503).json({ error: 'Device is offline' });
-    }
-
-    const result = await bulbController.turnOff(bulb.lastIp, { transition });
-    return res.json({ device: deviceId, ...result });
-  }
-
-  // Turn off all online bulbs
   const onlineBulbs = bulbStore.getOnlineBulbs();
   const results = await Promise.all(
     onlineBulbs.map(async (bulb) => {
-      const result = await bulbController.turnOff(bulb.lastIp, { transition });
-      return { device: bulb.id, ...result };
+      const result = await bulbController.turnOff(bulb.lastIp, { transition: transitionValue });
+      return { id: bulb.id, ...result };
     })
   );
 
-  res.json({ results });
+  res.json({ success: true, results });
 });
 
-// Refresh device discovery (supports both GET and POST)
+// Refresh device discovery (POST only)
 // Blocks for ~5 seconds while discovering devices, returns bulb list
-async function handleRefresh(req, res) {
+router.post('/refresh', async (req, res) => {
   try {
     const result = await refreshDiscovery();
     res.json({
+      success: true,
       message: 'Discovery completed',
       bulbs: result.bulbs,
-      devicesFound: result.devicesFound,
+      bulbsFound: result.devicesFound,
       duration: result.duration
     });
   } catch (error) {
-    res.status(504).json({ error: error.message });
+    res.status(504).json({ success: false, error: error.message });
   }
-}
-router.get('/refresh', handleRefresh);
-router.post('/refresh', handleRefresh);
+});
 
 // Get specific bulb state
 router.get('/bulb/:id/state', async (req, res) => {
   const bulb = bulbStore.getBulb(req.params.id);
   if (!bulb) {
-    return res.status(404).json({ error: 'Device not found' });
+    return res.status(404).json({ success: false, error: 'Bulb not found' });
   }
   if (!bulb.online || !bulb.lastIp) {
-    return res.status(503).json({ error: 'Device is offline', bulb });
+    return res.status(503).json({ success: false, error: 'Bulb is offline', bulb });
   }
 
   const result = await bulbController.getState(bulb.lastIp);
-  res.json({ device: req.params.id, bulb, ...result });
+  res.json({ id: req.params.id, bulb, ...result });
 });
 
 // Get device info (firmware version, etc.)
 router.get('/bulb/:id/info', async (req, res) => {
   const bulb = bulbStore.getBulb(req.params.id);
   if (!bulb) {
-    return res.status(404).json({ error: 'Device not found' });
+    return res.status(404).json({ success: false, error: 'Bulb not found' });
   }
   if (!bulb.online || !bulb.lastIp) {
-    return res.status(503).json({ error: 'Device is offline', bulb });
+    return res.status(503).json({ success: false, error: 'Bulb is offline', bulb });
   }
 
   const result = await bulbController.getDeviceInfo(bulb.lastIp);
@@ -136,34 +107,70 @@ router.get('/bulb/:id/info', async (req, res) => {
     await bulbStore.save();
   }
 
-  res.json({ device: req.params.id, ...result });
+  res.json({ id: req.params.id, ...result });
+});
+
+// Turn on specific bulb
+router.post('/bulb/:id/on', async (req, res) => {
+  const bulb = bulbStore.getBulb(req.params.id);
+  if (!bulb) {
+    return res.status(404).json({ success: false, error: 'Bulb not found' });
+  }
+  if (!bulb.online || !bulb.lastIp) {
+    return res.status(503).json({ success: false, error: 'Bulb is offline' });
+  }
+
+  const transition = req.body.transition ?? req.query.transition;
+  const transitionValue = transition ? parseInt(transition, 10) : undefined;
+
+  const result = await bulbController.turnOn(bulb.lastIp, { transition: transitionValue });
+  res.json({ id: req.params.id, ...result });
+});
+
+// Turn off specific bulb
+router.post('/bulb/:id/off', async (req, res) => {
+  const bulb = bulbStore.getBulb(req.params.id);
+  if (!bulb) {
+    return res.status(404).json({ success: false, error: 'Bulb not found' });
+  }
+  if (!bulb.online || !bulb.lastIp) {
+    return res.status(503).json({ success: false, error: 'Bulb is offline' });
+  }
+
+  const transition = req.body.transition ?? req.query.transition;
+  const transitionValue = transition ? parseInt(transition, 10) : undefined;
+
+  const result = await bulbController.turnOff(bulb.lastIp, { transition: transitionValue });
+  res.json({ id: req.params.id, ...result });
 });
 
 // Test bulb (cycle through red, green, blue)
 router.post('/bulb/:id/test', async (req, res) => {
   const bulb = bulbStore.getBulb(req.params.id);
   if (!bulb) {
-    return res.status(404).json({ error: 'Device not found' });
+    return res.status(404).json({ success: false, error: 'Bulb not found' });
   }
   if (!bulb.online || !bulb.lastIp) {
-    return res.status(503).json({ error: 'Device is offline' });
+    return res.status(503).json({ success: false, error: 'Bulb is offline' });
   }
 
   const result = await bulbController.testBulb(bulb.lastIp);
-  res.json({ device: req.params.id, ...result });
+  res.json({ id: req.params.id, ...result });
 });
 
-// Advanced bulb control (brightness, color, transition)
-router.post('/bulb/:id/control', async (req, res) => {
+// Set bulb state (brightness, color, on/off, transition)
+router.post('/bulb/:id/set', async (req, res) => {
   const bulb = bulbStore.getBulb(req.params.id);
   if (!bulb) {
-    return res.status(404).json({ error: 'Device not found' });
+    return res.status(404).json({ success: false, error: 'Bulb not found' });
   }
   if (!bulb.online || !bulb.lastIp) {
-    return res.status(503).json({ error: 'Device is offline' });
+    return res.status(503).json({ success: false, error: 'Bulb is offline' });
   }
 
-  const { state, brightness, r, g, b, transition } = req.body;
+  const { on, brightness, r, g, b, transition } = req.body;
+  // Convert on: true/false to state: "on"/"off" for bulbController
+  const state = on === true ? 'on' : on === false ? 'off' : undefined;
   const result = await bulbController.control(bulb.lastIp, {
     state,
     brightness,
@@ -173,26 +180,26 @@ router.post('/bulb/:id/control', async (req, res) => {
     transition
   });
 
-  res.json({ device: req.params.id, ...result });
+  res.json({ id: req.params.id, ...result });
 });
 
 // Update bulb friendly name
 router.post('/bulb/:id/name', async (req, res) => {
   const { name } = req.body;
   if (!name || typeof name !== 'string') {
-    return res.status(400).json({ error: 'Name is required' });
+    return res.status(400).json({ success: false, error: 'Name is required' });
   }
 
   const success = bulbStore.updateName(req.params.id, name.trim());
   if (!success) {
-    return res.status(404).json({ error: 'Device not found' });
+    return res.status(404).json({ success: false, error: 'Bulb not found' });
   }
 
   try {
     await bulbStore.save();
-    res.json({ device: req.params.id, name: name.trim() });
+    res.json({ success: true, id: req.params.id, name: name.trim() });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to save changes' });
+    res.status(500).json({ success: false, error: 'Failed to save changes' });
   }
 });
 
@@ -200,16 +207,16 @@ router.post('/bulb/:id/name', async (req, res) => {
 router.post('/bulb/:id/push', async (req, res) => {
   const bulb = bulbStore.getBulb(req.params.id);
   if (!bulb) {
-    return res.status(404).json({ error: 'Device not found' });
+    return res.status(404).json({ success: false, error: 'Bulb not found' });
   }
   if (!bulb.online || !bulb.lastIp) {
-    return res.status(503).json({ error: 'Device is offline' });
+    return res.status(503).json({ success: false, error: 'Bulb is offline' });
   }
 
   // Get current state from bulb
   const stateResult = await bulbController.getState(bulb.lastIp);
   if (!stateResult.success) {
-    return res.status(500).json({ error: 'Failed to get current state', details: stateResult.error });
+    return res.status(500).json({ success: false, error: 'Failed to get current state', details: stateResult.error });
   }
 
   // Push state to stack
@@ -223,8 +230,8 @@ router.post('/bulb/:id/push', async (req, res) => {
   });
 
   res.json({
-    device: req.params.id,
     success: true,
+    id: req.params.id,
     message: 'State pushed to stack',
     stackSize,
     state: stateResult.state
@@ -235,18 +242,18 @@ router.post('/bulb/:id/push', async (req, res) => {
 router.post('/bulb/:id/pop', async (req, res) => {
   const bulb = bulbStore.getBulb(req.params.id);
   if (!bulb) {
-    return res.status(404).json({ error: 'Device not found' });
+    return res.status(404).json({ success: false, error: 'Bulb not found' });
   }
   if (!bulb.online || !bulb.lastIp) {
-    return res.status(503).json({ error: 'Device is offline' });
+    return res.status(503).json({ success: false, error: 'Bulb is offline' });
   }
 
   // Pop state from stack
   const state = bulbStateStack.pop(req.params.id);
   if (!state) {
     return res.json({
-      device: req.params.id,
       success: true,
+      id: req.params.id,
       message: 'Stack is empty, no change made',
       stackSize: 0,
       restored: false
@@ -270,8 +277,8 @@ router.post('/bulb/:id/pop', async (req, res) => {
   }
 
   res.json({
-    device: req.params.id,
     success: result.success,
+    id: req.params.id,
     message: result.success ? 'State restored from stack' : 'Failed to restore state',
     stackSize: bulbStateStack.size(req.params.id),
     restored: true,
@@ -279,24 +286,24 @@ router.post('/bulb/:id/pop', async (req, res) => {
   });
 });
 
-// Push current state and apply new control settings (combined push + control)
+// Push current state and apply new settings (combined push + set)
 router.post('/bulb/:id/push-set', async (req, res) => {
   const bulb = bulbStore.getBulb(req.params.id);
   if (!bulb) {
-    return res.status(404).json({ error: 'Device not found' });
+    return res.status(404).json({ success: false, error: 'Bulb not found' });
   }
   if (!bulb.online || !bulb.lastIp) {
-    return res.status(503).json({ error: 'Device is offline' });
+    return res.status(503).json({ success: false, error: 'Bulb is offline' });
   }
 
   // Get current state from bulb
   const stateResult = await bulbController.getState(bulb.lastIp);
   if (!stateResult.success) {
-    return res.status(500).json({ error: 'Failed to get current state', details: stateResult.error });
+    return res.status(500).json({ success: false, error: 'Failed to get current state', details: stateResult.error });
   }
 
   // Push current state to stack (use transition from request for restore)
-  const { state, brightness, r, g, b, transition } = req.body;
+  const { on, brightness, r, g, b, transition } = req.body;
   const stackSize = bulbStateStack.push(req.params.id, {
     on: stateResult.state.on,
     brightness: stateResult.state.brightness,
@@ -306,8 +313,9 @@ router.post('/bulb/:id/push-set', async (req, res) => {
     transition: transition ?? 1000
   });
 
-  // Apply new control settings
-  const controlResult = await bulbController.control(bulb.lastIp, {
+  // Apply new settings - convert on: true/false to state: "on"/"off"
+  const state = on === true ? 'on' : on === false ? 'off' : undefined;
+  const setResult = await bulbController.control(bulb.lastIp, {
     state,
     brightness,
     r,
@@ -317,12 +325,12 @@ router.post('/bulb/:id/push-set', async (req, res) => {
   });
 
   res.json({
-    device: req.params.id,
-    success: controlResult.success,
-    message: controlResult.success ? 'State pushed and new settings applied' : 'State pushed but control failed',
+    success: setResult.success,
+    id: req.params.id,
+    message: setResult.success ? 'State pushed and new settings applied' : 'State pushed but set failed',
     stackSize,
     previousState: stateResult.state,
-    controlResult
+    setResult
   });
 });
 

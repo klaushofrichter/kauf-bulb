@@ -77,38 +77,48 @@ echo "--- List Bulbs ---"
 STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" "$BASE_URL/api/list")
 test_endpoint "GET /api/list" 200 "$STATUS"
 
-# Test 2: Turn on all bulbs
+# Test 2: Turn on all bulbs (POST)
 echo ""
-echo "--- Turn On/Off All ---"
-STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" "$BASE_URL/api/on")
-test_endpoint "GET /api/on (all bulbs)" 200 "$STATUS"
+echo "--- Turn On/Off All (POST) ---"
+STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/bulbs/on" \
+  -H "Content-Type: application/json" \
+  -d '{}')
+test_endpoint "POST /api/bulbs/on (all bulbs)" 200 "$STATUS"
 sleep 1
 
-# Test 3: Turn off all bulbs
-STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" "$BASE_URL/api/off")
-test_endpoint "GET /api/off (all bulbs)" 200 "$STATUS"
+# Test 3: Turn off all bulbs (POST)
+STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/bulbs/off" \
+  -H "Content-Type: application/json" \
+  -d '{}')
+test_endpoint "POST /api/bulbs/off (all bulbs)" 200 "$STATUS"
 sleep 1
 
-# Test 4: Turn on specific bulb
+# Test 4: Turn on specific bulb (POST)
 echo ""
-echo "--- Turn On/Off Specific Bulb ---"
-STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" "$BASE_URL/api/on?device=$BULB_ID")
-test_endpoint "GET /api/on?device=$BULB_ID" 200 "$STATUS"
+echo "--- Turn On/Off Specific Bulb (POST) ---"
+STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/bulb/$BULB_ID/on" \
+  -H "Content-Type: application/json" \
+  -d '{}')
+test_endpoint "POST /api/bulb/:id/on" 200 "$STATUS"
 sleep 1
 
-# Test 5: Turn off specific bulb
-STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" "$BASE_URL/api/off?device=$BULB_ID")
-test_endpoint "GET /api/off?device=$BULB_ID" 200 "$STATUS"
+# Test 5: Turn off specific bulb (POST)
+STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/bulb/$BULB_ID/off" \
+  -H "Content-Type: application/json" \
+  -d '{}')
+test_endpoint "POST /api/bulb/:id/off" 200 "$STATUS"
 sleep 1
 
 # Test 6: Turn on with transition
 echo ""
 echo "--- Transitions ---"
-STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" "$BASE_URL/api/on?device=$BULB_ID&transition=500")
-test_endpoint "GET /api/on with transition=500" 200 "$STATUS"
+STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/bulb/$BULB_ID/on" \
+  -H "Content-Type: application/json" \
+  -d '{"transition": 500}')
+test_endpoint "POST /api/bulb/:id/on with transition=500" 200 "$STATUS"
 sleep 2
 
-# Test 7: Refresh discovery
+# Test 7: Refresh discovery (POST only)
 echo ""
 echo "--- Discovery ---"
 STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/refresh")
@@ -135,27 +145,27 @@ STATUS=$(curl --max-time 15 -s -o /dev/null -w "%{http_code}" -X POST "$BASE_URL
 test_endpoint "POST /api/bulb/:id/test" 200 "$STATUS"
 sleep 2
 
-# Test 11: Advanced control - brightness and color
+# Test 11: Set bulb - brightness and color (new /set endpoint)
 echo ""
-echo "--- Advanced Control ---"
-STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/bulb/$BULB_ID/control" \
+echo "--- Set Bulb (formerly control) ---"
+STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/bulb/$BULB_ID/set" \
   -H "Content-Type: application/json" \
-  -d '{"state": "on", "brightness": 50, "r": 255, "g": 128, "b": 0}')
-test_endpoint "POST /api/bulb/:id/control (orange 50%)" 200 "$STATUS"
+  -d '{"on": true, "brightness": 50, "r": 255, "g": 128, "b": 0}')
+test_endpoint "POST /api/bulb/:id/set (orange 50%)" 200 "$STATUS"
 sleep 1
 
-# Test 12: Advanced control - color with transition
-STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/bulb/$BULB_ID/control" \
+# Test 12: Set bulb - color with transition
+STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/bulb/$BULB_ID/set" \
   -H "Content-Type: application/json" \
   -d '{"brightness": 100, "r": 0, "g": 0, "b": 255, "transition": 500}')
-test_endpoint "POST /api/bulb/:id/control (blue with transition)" 200 "$STATUS"
+test_endpoint "POST /api/bulb/:id/set (blue with transition)" 200 "$STATUS"
 sleep 1
 
-# Test 13: Advanced control - turn off with fade
-STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/bulb/$BULB_ID/control" \
+# Test 13: Set bulb - turn off with fade
+STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/bulb/$BULB_ID/set" \
   -H "Content-Type: application/json" \
-  -d '{"state": "off", "transition": 500}')
-test_endpoint "POST /api/bulb/:id/control (off with fade)" 200 "$STATUS"
+  -d '{"on": false, "transition": 500}')
+test_endpoint "POST /api/bulb/:id/set (off with fade)" 200 "$STATUS"
 sleep 1
 
 # Test 14: Update bulb name (then restore)
@@ -181,9 +191,9 @@ echo ""
 echo "--- Push/Pop State Stack ---"
 
 # Turn on with known color first
-curl $CURL_OPTS -o /dev/null -X POST "$BASE_URL/api/bulb/$BULB_ID/control" \
+curl $CURL_OPTS -o /dev/null -X POST "$BASE_URL/api/bulb/$BULB_ID/set" \
   -H "Content-Type: application/json" \
-  -d '{"state": "on", "brightness": 80, "r": 255, "g": 200, "b": 100}'
+  -d '{"on": true, "brightness": 80, "r": 255, "g": 200, "b": 100}'
 sleep 1
 
 # Push state
@@ -193,9 +203,9 @@ STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/b
 test_endpoint "POST /api/bulb/:id/push" 200 "$STATUS"
 
 # Change to different color
-curl $CURL_OPTS -o /dev/null -X POST "$BASE_URL/api/bulb/$BULB_ID/control" \
+curl $CURL_OPTS -o /dev/null -X POST "$BASE_URL/api/bulb/$BULB_ID/set" \
   -H "Content-Type: application/json" \
-  -d '{"state": "on", "brightness": 50, "r": 0, "g": 0, "b": 255}'
+  -d '{"on": true, "brightness": 50, "r": 0, "g": 0, "b": 255}'
 sleep 1
 
 # Pop state (restore)
@@ -207,14 +217,14 @@ sleep 1
 STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/bulb/$BULB_ID/pop")
 test_endpoint "POST /api/bulb/:id/pop (empty stack)" 200 "$STATUS"
 
-# Test 16: Push-Set (combined push + control)
+# Test 16: Push-Set (combined push + set)
 echo ""
 echo "--- Push-Set Combined Endpoint ---"
 
 # Push and set to red
 STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/bulb/$BULB_ID/push-set" \
   -H "Content-Type: application/json" \
-  -d '{"state": "on", "brightness": 100, "r": 255, "g": 0, "b": 0, "transition": 300}')
+  -d '{"on": true, "brightness": 100, "r": 255, "g": 0, "b": 0, "transition": 300}')
 test_endpoint "POST /api/bulb/:id/push-set (red)" 200 "$STATUS"
 sleep 1
 
@@ -226,8 +236,10 @@ sleep 1
 # Test 17: Error cases
 echo ""
 echo "--- Error Cases ---"
-STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" "$BASE_URL/api/on?device=invalid-bulb-id")
-test_endpoint "GET /api/on with invalid device (expect 404)" 404 "$STATUS"
+STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" -X POST "$BASE_URL/api/bulb/invalid-bulb-id/on" \
+  -H "Content-Type: application/json" \
+  -d '{}')
+test_endpoint "POST /api/bulb/:id/on with invalid id (expect 404)" 404 "$STATUS"
 
 STATUS=$(curl $CURL_OPTS -o /dev/null -w "%{http_code}" "$BASE_URL/api/bulb/invalid-id/state")
 test_endpoint "GET /api/bulb/:id/state with invalid id (expect 404)" 404 "$STATUS"
